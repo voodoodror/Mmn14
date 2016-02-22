@@ -10,5 +10,5 @@
 #include <stdlib.h>
 
 void harta() {
-	printf("LET'S ROCK!");
+	printf("LET'S ROCK! 2nd");
 }
