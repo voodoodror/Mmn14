@@ -12,6 +12,6 @@
 #include <stdlib.h>
 
 int main(void) {
-	printf("test"); /* prints  */
+	printf("Hello World This Time"); /* prints  */
 	return EXIT_SUCCESS;
 }
