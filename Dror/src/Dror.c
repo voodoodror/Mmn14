@@ -3,7 +3,7 @@
  Name        : Dror.c
  Author      : Dror Bletter
  Version     :
- Copyright   : 
+ Copyright   :
  Description : Hello World in C, Ansi-style
  ============================================================================
  */
@@ -12,6 +12,6 @@
 #include <stdlib.h>
 
 int main(void) {
-	puts(""); /* prints  */
+	printf("test"); /* prints  */
 	return EXIT_SUCCESS;
 }
