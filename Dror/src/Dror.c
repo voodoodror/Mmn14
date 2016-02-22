@@ -12,7 +12,7 @@
 #include <stdlib.h>
 
 int main(void) {
-	printf("Trying pull instead\n"); /* prints  */
+	printf("Pushing again...\n"); /* prints  */
 	harta();
 	return EXIT_SUCCESS;
 }
