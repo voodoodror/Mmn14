@@ -12,6 +12,7 @@
 #include <stdlib.h>
 
 int main(void) {
-	printf("Trying pull instead"); /* prints  */
+	printf("Trying pull instead\n"); /* prints  */
+	harta();
 	return EXIT_SUCCESS;
 }
