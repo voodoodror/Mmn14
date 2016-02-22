@@ -12,6 +12,6 @@
 #include <stdlib.h>
 
 int main(void) {
-	printf("Hello World This Time, 3rd try"); /* prints  */
+	printf("Trying pull instead"); /* prints  */
 	return EXIT_SUCCESS;
 }
