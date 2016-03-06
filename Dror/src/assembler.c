@@ -1,6 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "assembler.h"
+
+	mySymbolList *symbolList;
+    char *lineToProcess;
+    char symbolChar = ':';
 
 int main(int argc, char **argv)
 {
@@ -34,17 +39,29 @@ int main(int argc, char **argv)
 
 void first_parsing_line (char *line, int *count) {
 	int i=0, ic=0, dc=0;
-	/* remove pre spaces */
+
+	mySymbolList *symbolList = malloc(sizeof(mySymbolList));
+
 
 	strip_extra_spaces(line);
 	if (line[0] == ';') {
 		printf("%d: %s (ignoring)\n",*count,line);
 	} else {
 		if (hasSymbol(line) != NULL) {
-				if (hasSymbol(hasSymbol(line+1)) != NULL) {
+				if (hasSymbol(hasSymbol(line)+1) != NULL) {
 					printf("%d: %s (multiple symbols, ignoring)\n",*count,line);
 				} else {
-					printf("SYMBOL: %s\n",getSymbol(line));
+					/*if (symbolList != NULL) {
+						mySymbolList *tmp = realloc(symbolList,sizeof(symbolList)+sizeof(mySymbolList));
+						if (tmp == NULL) {
+							printf("No memory left for new symbol.");
+							exit(0);
+						}
+						else {
+							symbolList = tmp;*/
+							symbolList[0].Sym = getSymbol(line);
+						/*}
+						}*/
 				}
 		} else {
 			printf("%d: %s\n",*count,line);
@@ -65,17 +82,12 @@ void strip_extra_spaces(char* str) {
 }
 
 char *hasSymbol(char* str) {
-	char symbolChar = ':';
 	char *symbolPos = strchr(str, symbolChar);
-
 	return symbolPos;
 }
 char *getSymbol(char* str) {
-	char symbolChar = ':';
-	int symbolLen = strlen(str)-strlen(strchr(str,symbolChar)-1);
-
 	char *tmpSymbol;
+	int symbolLen = strlen(str)-strlen(strchr(str,symbolChar)-1);
 	strncpy(tmpSymbol, str, symbolLen);
-
 	return tmpSymbol;
 }
