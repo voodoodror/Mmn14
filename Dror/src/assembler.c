@@ -43,13 +43,13 @@ void first_parsing_line (char *line, int *count) {
 		if (hasSymbol(hasSymbol(line)+1) != NULL) {
 			printf("%s",line);
 		} else {
-			printf("%s has 1 symbol exactly.\n",line);
+			printf("\"%s\" has 1 symbol exactly.\n",line);
 		}
 	}
 
 	/* removes comment from beginning*/
 	if (line[0] == ';') {
-		printf("%d: Comment found, ignoring...\n",*count);
+		printf("%d: %s (has comment)\n",*count,line);
 	} else {
 		printf("%d: %s\n",*count,line);
 	}
@@ -60,6 +60,10 @@ void strip_extra_spaces(char* str) {
   for(i=x=0; str[i]; ++i)
     if(!isspace(str[i]) || (i>0 && !isspace(str[i-1])))
       str[x++] = str[i];
+  char newlineChar = '\n';
+  if (strchr(str,newlineChar) != NULL) {
+	  str[x-1] = '\0';
+  }
   str[x] = '\0';
 }
 
