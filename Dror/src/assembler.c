@@ -70,6 +70,6 @@ void strip_extra_spaces(char* str) {
 char *hasSymbol(char* str) {
 	char symbolChar = ':';
 	char *symbolPos = strchr(str, symbolChar);
-
+	/*test*/
 	return symbolPos;
 }
