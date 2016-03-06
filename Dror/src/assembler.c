@@ -36,22 +36,19 @@ void first_parsing_line (char *line, int *count) {
 	int i=0, ic=0, dc=0;
 	/* remove pre spaces */
 
-
 	strip_extra_spaces(line);
-	/*ignore_comments(line);*/
-	if (hasSymbol(line) != NULL) {
-		if (hasSymbol(hasSymbol(line)+1) != NULL) {
-			printf("%s",line);
-		} else {
-			printf("\"%s\" has 1 symbol exactly.\n",line);
-		}
-	}
-
-	/* removes comment from beginning*/
 	if (line[0] == ';') {
-		printf("%d: %s (has comment)\n",*count,line);
+		printf("%d: %s (ignoring)\n",*count,line);
 	} else {
-		printf("%d: %s\n",*count,line);
+		if (hasSymbol(line) != NULL) {
+				if (hasSymbol(hasSymbol(line+1)) != NULL) {
+					printf("%d: %s (multiple symbols, ignoring)\n",*count,line);
+				} else {
+					printf("SYMBOL: %s\n",getSymbol(line));
+				}
+		} else {
+			printf("%d: %s\n",*count,line);
+		}
 	}
 }
 
@@ -70,6 +67,15 @@ void strip_extra_spaces(char* str) {
 char *hasSymbol(char* str) {
 	char symbolChar = ':';
 	char *symbolPos = strchr(str, symbolChar);
-	/*test*/
+
 	return symbolPos;
+}
+char *getSymbol(char* str) {
+	char symbolChar = ':';
+	int symbolLen = strlen(str)-strlen(strchr(str,symbolChar)-1);
+
+	char *tmpSymbol;
+	strncpy(tmpSymbol, str, symbolLen);
+
+	return tmpSymbol;
 }
