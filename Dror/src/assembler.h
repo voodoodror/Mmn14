@@ -20,6 +20,11 @@ typedef struct symbolLists {
 void first_parsing_line (char *line, int *count);
 void strip_extra_spaces (char* str);
 int hasSymbol(char* str);
+char *hasDot(char* str);
+int extractData(char* str);
+int extractString(char* str);
 char *getSymbol(char* str, int pos);
+char *getDotInstruction(char* str);
+
 mySymbolList *createSymbolNode (char* str);
 mySymbolList *addSymbolNode (mySymbolList* symbolList, char* str);
