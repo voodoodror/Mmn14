@@ -6,6 +6,8 @@
 
     char *lineToProcess;
     char symbolChar = ':';
+    char dotChar = '.';
+    char spaceChar = ' ';
     int symbolLen = 0;
     int symbolCounter = 0;
     char *tmpSymbol;
@@ -56,20 +58,36 @@ void first_parsing_line (char *line, int *count) {
 	if (line[0] == ';') {
 		printf("%d: %s (comment, ignoring)\n",*count,line);
 	} else {
-		if (!isalpha(line[0])) {
-			printf("%d: %s (must begin with a letter!)\n",*count,line);
+		if (!isalpha(line[0]) && line[0] != '.') {
+			printf("%d: %s (must begin with a letter OR a DOT!)\n",*count,line);
 		} else {
 			if (hasSymbol(line) != 0) {
 				if (hasSymbol(line+(symbolLen+1)) != 0) {
 					printf("%d: %s (multiple symbols, ignoring)\n",*count,line);
 				} else {
+					if (!dupSymbol) {
+						if (hasDot(line+(symbolLen+2)) != NULL) {
+							if (strcmp(getDotInstruction(line+(symbolLen+3)),"string")) {
+								printf("%d: %s (string found)\n",*count,line);
+							}
+						}
 					printf("%d: %s (1 valid symbol found)\n",*count,line);
+
 					symbolPointer = getSymbol(line,hasSymbol(line));
 					symbolList = addSymbolNode(symbolList, symbolPointer);
 					symbolCounter++;
+					}
 				}
 			} else {
-				printf("%d: %s (no symbols found)\n",*count,line);
+					/*switch (findDotInstruction(line))) {
+						case "extern":
+							printf("It's an external!");
+							break;
+						case "entry":
+							printf("It's an entry!");
+							break;
+					}*/
+					printf("%d: %s (no symbols found)\n",*count,line);
 			}
 		}
 	}
@@ -93,6 +111,55 @@ void strip_extra_spaces(char* str) {
 }
 
 int hasSymbol(char* str) {
+	char *symbolPos = strchr(str, symbolChar);
+	int tmpLen;
+
+	if (symbolPos == NULL)
+		return 0;
+	tmpLen = strlen(str)-strlen(symbolPos);
+	if (!tmpLen)
+		tmpLen+=1;
+
+	symbolLen=tmpLen;
+	return tmpLen;
+}
+char *hasDot(char* str) {
+	char *tmpStr;
+	tmpStr = strchr(str,dotChar);
+
+	return tmpStr;
+}
+int extractData(char* str) {
+	char *symbolPos = strchr(str, symbolChar);
+	int tmpLen;
+
+	if (symbolPos == NULL)
+		return 0;
+	tmpLen = strlen(str)-strlen(symbolPos);
+	if (!tmpLen)
+		tmpLen+=1;
+
+	symbolLen=tmpLen;
+	return tmpLen;
+}
+char *getDotInstruction(char* str) {
+	char *symbolPos = strchr(str, spaceChar);
+	char *tmpSymbol;
+	int tmpLen;
+
+	if (symbolPos == NULL)
+		return 0;
+	tmpLen = strlen(str)-strlen(symbolPos);
+	if (!tmpLen)
+		tmpLen+=1;
+
+	symbolLen=tmpLen;
+
+	strncpy(tmpSymbol,str,tmpLen);
+	tmpSymbol[tmpLen] = '\0';
+	return tmpSymbol;
+}
+int extractString(char* str) {
 	char *symbolPos = strchr(str, symbolChar);
 	int tmpLen;
 
