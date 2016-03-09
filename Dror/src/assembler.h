@@ -26,5 +26,6 @@ int extractString(char* str);
 char *getSymbol(char* str, int pos);
 char *getDotInstruction(char* str);
 
+
 mySymbolList *createSymbolNode (char* str);
 mySymbolList *addSymbolNode (mySymbolList* symbolList, char* str);
