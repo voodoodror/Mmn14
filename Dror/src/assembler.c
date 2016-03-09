@@ -9,8 +9,8 @@
     char dotChar = '.';
     char spaceChar = ' ';
     int symbolLen = 0;
+    int dotLen = 0;
     int symbolCounter = 0;
-    char *tmpSymbol;
     mySymbolList* symbolList;
 
 int main(int argc, char **argv)
@@ -53,6 +53,7 @@ void first_parsing_line (char *line, int *count) {
 	int i=0, dupSymbol=0;
 
 	char *symbolPointer;
+	char *tmp;
 
 	strip_extra_spaces(line);
 	if (line[0] == ';') {
@@ -64,11 +65,15 @@ void first_parsing_line (char *line, int *count) {
 			if (hasSymbol(line) != 0) {
 				if (hasSymbol(line+(symbolLen+1)) != 0) {
 					printf("%d: %s (multiple symbols, ignoring)\n",*count,line);
-				} else {
+				} else if (hasSymbol(line+(symbolLen))) {
 					if (!dupSymbol) {
 						if (hasDot(line+(symbolLen+2)) != NULL) {
-							if (strcmp(getDotInstruction(line+(symbolLen+3)),"string")) {
+							if (strcmp(getDotInstruction(line+(symbolLen+3)),"string") == 0) {
 								printf("%d: %s (string found)\n",*count,line);
+							} else if (strcmp(getDotInstruction(line+(symbolLen+3)),"data") == 0) {
+								printf("%d: %s (data found)\n",*count,line);
+							} else {
+								printf("%d: %s (unknown instruction line, ignoring)\n",*count,line);
 							}
 						}
 					printf("%d: %s (1 valid symbol found)\n",*count,line);
@@ -78,15 +83,15 @@ void first_parsing_line (char *line, int *count) {
 					symbolCounter++;
 					}
 				}
+			} else if (line[0] == '.'){
+				if (strcmp(getDotInstruction(line+1),"entry") == 0) {
+					printf("%d: %s (entry found)\n",*count,line);
+				} else if (strcmp(getDotInstruction(line+1),"extern") == 0) {
+					printf("%d: %s (extern found)\n",*count,line);
+				} else {
+					printf("%d: %s (unknown instruction line, ignoring)\n",*count,line);
+				}
 			} else {
-					/*switch (findDotInstruction(line))) {
-						case "extern":
-							printf("It's an external!");
-							break;
-						case "entry":
-							printf("It's an entry!");
-							break;
-					}*/
 					printf("%d: %s (no symbols found)\n",*count,line);
 			}
 		}
@@ -143,21 +148,20 @@ int extractData(char* str) {
 	return tmpLen;
 }
 char *getDotInstruction(char* str) {
-	char *symbolPos = strchr(str, spaceChar);
-	char *tmpSymbol;
+	char *dotPos = strchr(str, spaceChar);
+	char *tmp = malloc(sizeof(str));
 	int tmpLen;
 
-	if (symbolPos == NULL)
-		return 0;
-	tmpLen = strlen(str)-strlen(symbolPos);
+	if (dotPos == NULL)
+		return "";
+	tmpLen = strlen(str)-strlen(dotPos);
 	if (!tmpLen)
 		tmpLen+=1;
 
-	symbolLen=tmpLen;
-
-	strncpy(tmpSymbol,str,tmpLen);
-	tmpSymbol[tmpLen] = '\0';
-	return tmpSymbol;
+	dotLen=tmpLen;
+	memcpy(tmp,str,tmpLen+1);
+	tmp[dotLen] = '\0';
+	return tmp;
 }
 int extractString(char* str) {
 	char *symbolPos = strchr(str, symbolChar);
@@ -173,10 +177,8 @@ int extractString(char* str) {
 	return tmpLen;
 }
 char *getSymbol(char* str, int pos) {
-	char *tmpSymbol;
-	strncpy(tmpSymbol,str,pos);
-	tmpSymbol[pos] = '\0';
-	return tmpSymbol;
+	str[pos] = '\0';
+	return str;
 }
 mySymbolList *createSymbolNode (char* str) {
 	mySymbolList* newSymbol = malloc(sizeof(mySymbolList));
