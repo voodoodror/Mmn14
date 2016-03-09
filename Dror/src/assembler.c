@@ -50,26 +50,29 @@ int main(int argc, char **argv)
 }
 
 void first_parsing_line (char *line, int *count) {
-	int i=0, dupSymbol=0;
+	int i=0, dupSymbol=0, dc=0, ic=0, symbolFound=0;
 
 	char *symbolPointer;
 	char *tmp;
-
+	char *stringFound;
+	
 	strip_extra_spaces(line);
 	if (line[0] == ';') {
-		printf("%d: %s (comment, ignoring)\n",*count,line);
+		printf("%d: %s (comment line, ignoring)\n",*count,line);
 	} else {
 		if (!isalpha(line[0]) && line[0] != '.') {
 			printf("%d: %s (must begin with a letter OR a DOT!)\n",*count,line);
 		} else {
 			if (hasSymbol(line) != 0) {
+				symbolFound=1;
 				if (hasSymbol(line+(symbolLen+1)) != 0) {
-					printf("%d: %s (multiple symbols, ignoring)\n",*count,line);
-				} else if (hasSymbol(line+(symbolLen))) {
+					printf("%d: %s (multiple symbols found, ignoring)\n",*count,line);
+				} else {
 					if (!dupSymbol) {
 						if (hasDot(line+(symbolLen+2)) != NULL) {
 							if (strcmp(getDotInstruction(line+(symbolLen+3)),"string") == 0) {
-								printf("%d: %s (string found)\n",*count,line);
+								
+								printf("%d: %s (string found, it is: \"%s\")\n",*count,line,stringFound);
 							} else if (strcmp(getDotInstruction(line+(symbolLen+3)),"data") == 0) {
 								printf("%d: %s (data found)\n",*count,line);
 							} else {
