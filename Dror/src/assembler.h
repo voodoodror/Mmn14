@@ -10,9 +10,9 @@
 
 typedef struct symbolLists {
 	char *Sym;
-	unsigned int addrSym;
-	int extSym;
-	int actionSym;
+	unsigned int addr;
+	int ext;
+	int action;
 	struct symbolLists* next;
 } mySymbolList;
 
@@ -25,7 +25,7 @@ int extractData(char* str);
 int extractString(char* str);
 char *getSymbol(char* str, int pos);
 char *getDotInstruction(char* str);
+char *hasQM(char* str);
 
-
-mySymbolList *createSymbolNode (char* str);
-mySymbolList *addSymbolNode (mySymbolList* symbolList, char* str);
+mySymbolList *createSymbolNode (char* str, unsigned int dc, int external, int action);
+	mySymbolList *addSymbolNode (mySymbolList* symbolList, char* str, unsigned int dc, int external, int action);
