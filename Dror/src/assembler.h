@@ -85,7 +85,7 @@ void first_parsing_line (char *line, int *count);
 void strip_extra_spaces (char* str);
 int hasSymbol(char* str);
 char *hasDot(char* str);
-void extractData(char* str, char * type);
+int extractData(char* str, char * type);
 char *getSymbol(char* str, int pos);
 char *getNextString(char* str);
 char *hasQM(char* str);
