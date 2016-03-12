@@ -124,7 +124,7 @@ void first_parsing_line (char *line, int *count) {
 						for (iter = symbolList; NULL != iter; iter = iter->next) {
 								if(strcmp(iter->Sym,symbolPointer) == 0) {
 										dupSymbol = 1;
-										printf("%d: %s (duplicate symbol found)\n",*count,line,iter->addr,iter->action,iter->ext);
+										printf("%d: %s (duplicate symbol found)\n",*count,line);
 								}
 						}
 					}
@@ -186,6 +186,7 @@ void first_parsing_line (char *line, int *count) {
 					printf("%d: %s (unknown instruction line, ignoring)\n",*count,line);
 				}
 			} else {
+				symbolFound=0;
 				i=0;
 				dotCommand = getNextString(line);
 				while (i<=15 && !commandFound) {
@@ -363,10 +364,13 @@ int extractOperands(char *str, int opcode) {
 			return 1;
 		} else if (singleOperand) {
 			printf("%d: Command 1 SRC or DEST OPERAND found.\n",count);
+			return 1;
 		} else if (opcode==15) {
 			printf("%d: Stop command found!\n",count);
+			return 1;
 		} else {
 			printf("SYNTAX ERROR:\n1. Do not place 2 commas side by side\n2. Please make sure you do not exceed 2 operands limit.\n\n");
+			return 0;
 		}
 }
 char *getNextString(char* str) {
