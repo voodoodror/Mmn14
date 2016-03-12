@@ -133,11 +133,11 @@ void first_parsing_line (char *line, int *count) {
 						if (hasDot(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar))) != NULL) {
 							dotCommand = getNextString(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar)+sizeof(dotChar)));
 							if (strcmp(dotCommand,"string") == 0) {
-								extractResult = extractData(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar)+sizeof(dotChar)+strlen(dotCommand)+sizeof(spaceChar)),"string");
+								extractResult = extractSymData("string");
 								if (extractResult)
 									printf("%d: %s (string found)\n",*count,line);
 							} else if (strcmp(dotCommand,"data") == 0) {
-								extractResult = extractData(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar)+sizeof(dotChar)+strlen(dotCommand)+sizeof(spaceChar)),"data");
+								extractResult = extractSymData("data");
 								if (extractResult)
 									printf("%d: %s (data found)\n",*count,line);
 							} else {
