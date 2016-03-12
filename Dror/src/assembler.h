@@ -7,6 +7,8 @@
 
 #define MAX_LINE 80
 #define BUF_SIZE 100
+#define MAX_ARRAY_SIZE 1000
+#define COMMAND_SIZE 16
 
 #define ERA_WIDTH 2
 #define DREG_WIDTH 3
@@ -43,8 +45,7 @@
 #define JSR 13
 #define RTS 14
 #define STOP 15
-
-
+#define extractSymMacro(X) extractOperands(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar)+sizeof(dotChar)+strlen(dotCommand)),X);
 
 typedef struct symbolLists {
 	char *Sym;
@@ -75,9 +76,9 @@ typedef struct commandTables {
 } myCommandTable;
 
 typedef struct dataTables {
-	char *dc;
-	myCommandTable *command;
-	myHashTable *code;
+	int dc;
+	unsigned int data;
+	struct dataTables* next;
 } myDataTable;
 
 void init_command_table();
@@ -89,6 +90,9 @@ int extractData(char* str, char * type);
 char *getSymbol(char* str, int pos);
 char *getNextString(char* str);
 char *hasQM(char* str);
+int extractOperands(char *str, int opcode);
 
 mySymbolList *createSymbolNode (char* str, unsigned int dc, int external, int action);
 mySymbolList *addSymbolNode (mySymbolList* symbolList, char* str, unsigned int dc, int external, int action);
+myDataTable *createDataNode (int dc, unsigned int data);
+myDataTable *addDataNode (myDataTable* dataTable, int dc, unsigned int data);
