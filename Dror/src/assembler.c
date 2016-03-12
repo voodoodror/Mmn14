@@ -10,17 +10,17 @@
     const char spaceChar = ' ';
     const char qmChar = '\"';
     const char newlineChar = '\n';
-    const char commaChar = 44;
+    const char commaChar = 44; /* , char */
     int symbolLen = 0;
     int dotLen = 0;
     int symbolCounter = 0;
     int errorFlag = 0;
     int dc=0, ic=0;
     int count;
-    mySymbolList* symbolList;
-    myHashTable *hashTable[1000];
-    myCommandTable commandTable[16];
-    myDataTable *dataTable[1000];
+    mySymbolList *symbolList;
+    myHashTable *hashTable[MAX_ARRAY_SIZE];
+    myCommandTable commandTable[COMMAND_SIZE];
+    myDataTable *dataTable;
 
 int main(int argc, char **argv)
 {
@@ -53,10 +53,16 @@ int main(int argc, char **argv)
         	count++;
         }
         fclose(fp);
+
         printf("\n\nSymbol Table:\n");
 		mySymbolList* iter;
 		for (iter = symbolList; NULL != iter; iter = iter->next)
-						printf("NAME: \"%s\"\tADDR: \"%d\"\tEXTERNAL: \"%d\"\tACTION: \"%d\"\n",iter->Sym,iter->addr,iter->ext,iter->action);
+			printf("NAME: \"%s\"\tADDR: \"%d\"\tEXTERNAL: \"%d\"\tACTION: \"%d\"\n",iter->Sym,iter->addr,iter->ext,iter->action);
+
+		printf("\n\nData Table:\n");
+		myDataTable* iterd;
+		for (iterd = dataTable; NULL != iterd; iterd = iterd->next)
+			printf("DC: \"%d\"\tDATA: \"%u\"\n",iterd->dc,iterd->data);
     }
     return 0;
 }
@@ -90,13 +96,12 @@ void init_command_table()
 	commandTable[12].command = "prn",commandTable[12].srcOperations=0,commandTable[12].destOperations=1;
 	commandTable[13].command = "jsr",commandTable[13].srcOperations=0,commandTable[13].destOperations=1;
 	commandTable[14].command = "rts",commandTable[14].srcOperations=0,commandTable[14].destOperations=0;
-	commandTable[15].command = "top",commandTable[15].srcOperations=0,commandTable[15].destOperations=0;
+	commandTable[15].command = "stop",commandTable[15].srcOperations=0,commandTable[15].destOperations=0;
 }
 void first_parsing_line (char *line, int *count) {
 	int i=0, dupSymbol=0, symbolFound=0, commandFound=0;
 
 	char *symbolPointer;
-	char *stringFound;
 	char *dotCommand;
 	char extractResult;
 
@@ -147,13 +152,16 @@ void first_parsing_line (char *line, int *count) {
 								symbolList = addSymbolNode(symbolList,symbolPointer,100,0,0);
 							symbolCounter++;
 							dotCommand = getNextString(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar)));
-							for (i=0; i<15; i++) {
-								if (strcmp(getNextString(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar))),commandTable[i].command)) {
+							i=-1;
+							while (i<=15 && !commandFound) {
+								if (strcmp(dotCommand,commandTable[++i].command)==0) {
 									commandFound=1;
 								}
 							}
 							if (commandFound) {
-								printf("%d: %s (\"%s\" command WITH symbol found)\n",*count,line,getNextString(line+(symbolLen+2)));
+								extractResult = extractSymMacro(i);
+								if (extractResult)
+									printf("%d: %s (\"%s\", command number %d)\n",*count,line,dotCommand,i);
 							} else {
 								printf("%d: %s (command not found)\n",*count,line);
 							}
@@ -178,15 +186,20 @@ void first_parsing_line (char *line, int *count) {
 					printf("%d: %s (unknown instruction line, ignoring)\n",*count,line);
 				}
 			} else {
-				for (i=0; i<15; i++) {
-					if (strcmp(getNextString(line),commandTable[i].command)) {
+				i=0;
+				dotCommand = getNextString(line);
+				while (i<=15 && !commandFound) {
+					if (strcmp(dotCommand,commandTable[i].command)==0) {
 						commandFound=1;
 					}
+					i++;
 				}
 				if (commandFound) {
-					printf("%d: %s (\"%s\" command found)\n",*count,line,getNextString(line));
+					extractResult = extractOperands(line+(sizeof(spaceChar)+strlen((char *)dotCommand)),i);
+					if (extractResult)
+						printf("%d: %s command found: (\"%s\", command number %d)\n",*count,line,dotCommand,i);
 				} else {
-					printf("%d: %s (command not found)\n",*count,line);
+							printf("%d: %s (command not found)\n",*count,line);
 				}
 			}
 		}
@@ -208,6 +221,8 @@ void strip_extra_spaces(char* str) {
   }
   if (isspace(str[x]))
 	  str[x] = '\0';
+  if (isspace(str[strlen((char *)str)-1]))
+	  str[strlen((char *)str)-1] = '\0';
   if (strchr(str,newlineChar) != NULL) {
 	  str[x-1] = '\0';
   } else {
@@ -272,6 +287,7 @@ int extractData(char *str, char *type) {
 
 		while (token != NULL) {
 		        printf("TOKEN: %s\n", token);
+
 		        token = strsep(&rwPointer,",");
 		        dc++;
 		}
@@ -294,11 +310,64 @@ int extractData(char *str, char *type) {
 				printf("%d: Syntax Error: No quotation marks found for string!\n",count);
 				return 0;
 			} else if (qmFound>2) {
-				printf("%d: Syntax Error: Too much quotation marks found!\n",count);
+				printf("%d: Syntax Error: Too much quotation marks has been found!\n",count);
 				return 0;
 			}
 		}
 	return 0;
+}
+int extractOperands(char *str, int opcode) {
+	char rwString[BUF_SIZE];
+	char *rwPointer;
+	strcpy(rwString,str);
+	char *token;
+	int i=0,singleOperand=0;
+	rwPointer = rwString;
+
+	token = strchr(str,commaChar);
+
+	if (token == NULL && opcode != 15) {
+		if (str != NULL && (commandTable[opcode].srcOperations==1 || commandTable[opcode].destOperations==1)) {
+			singleOperand=1;
+		} else {
+			printf("%d: Invalid operand for %s\n",count,commandTable[opcode].command);
+			return 0;
+		}
+	}
+
+	token = strsep(&rwPointer,",");
+
+	while (token != NULL && !singleOperand) {
+					if (strcmp(token,"\0")==0 && opcode!=15) {
+						printf("%d: Syntax Error: Empty or invalid operand found.\n",count);
+						return 0;
+					}
+					token = strsep(&rwPointer,",");
+					i++;
+			}
+		if (i==2 && !singleOperand) {
+			strcpy(rwString,str);
+			rwPointer = rwString;
+
+			if (dataTable == NULL) {
+				token = strsep(&rwPointer,",");
+				dataTable = createDataNode(count,count);
+				token = strsep(&rwPointer,",");
+				dataTable = addDataNode(dataTable,count,count);
+			} else {
+				token = strsep(&rwPointer,",");
+				dataTable = addDataNode(dataTable,count,count);
+				token = strsep(&rwPointer,",");
+				dataTable = addDataNode(dataTable,count,count);
+			}
+			return 1;
+		} else if (singleOperand) {
+			printf("%d: Command 1 SRC or DEST OPERAND found.\n",count);
+		} else if (opcode==15) {
+			printf("%d: Stop command found!\n",count);
+		} else {
+			printf("SYNTAX ERROR:\n1. Do not place 2 commas side by side\n2. Please make sure you do not exceed 2 operands limit.\n\n");
+		}
 }
 char *getNextString(char* str) {
 	char *dotPos = strchr(str, spaceChar);
@@ -344,6 +413,27 @@ mySymbolList *addSymbolNode (mySymbolList* symbolList, char* str, unsigned int d
 				symbolList = symbolList->next;
 			}
 			symbolList->next = newSymbol;
+	}
+	return firstpos;
+}
+myDataTable *createDataNode (int dc, unsigned int data) {
+	myDataTable* newData = malloc(sizeof(myDataTable));
+
+	if (NULL != newData){
+		newData->dc = dc;
+		newData->data = data;
+		newData->next = NULL;
+	}
+	return newData;
+}
+myDataTable *addDataNode (myDataTable* dataTable, int dc, unsigned int data) {
+	myDataTable* newData = createDataNode(dc,data);
+	myDataTable *firstpos = dataTable;
+	if (newData != NULL) {
+			while (dataTable->next != NULL) {
+				dataTable = dataTable->next;
+			}
+			dataTable->next = newData;
 	}
 	return firstpos;
 }
