@@ -46,6 +46,7 @@
 #define RTS 14
 #define STOP 15
 #define extractSymMacro(X) extractOperands(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar)+sizeof(dotChar)+strlen(dotCommand)),X);
+#define extractSymData(X) extractData(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar)+sizeof(dotChar)+strlen(dotCommand)+sizeof(spaceChar)),X);
 
 typedef struct symbolLists {
 	char *Sym;
