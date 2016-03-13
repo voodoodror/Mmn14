@@ -4,23 +4,23 @@
 #include <ctype.h>
 #include "assembler.h"
 
-    char *lineToProcess;
-    const char symbolChar = ':';
-    const char dotChar = '.';
-    const char spaceChar = ' ';
-    const char qmChar = '\"';
-    const char newlineChar = '\n';
-    const char commaChar = 44; /* , char */
-    int symbolLen = 0;
-    int dotLen = 0;
-    int symbolCounter = 0;
-    int errorFlag = 0;
-    int dc=0, ic=0;
-    int count;
-    mySymbolList *symbolList;
-    myHashTable *hashTable[MAX_ARRAY_SIZE];
-    myCommandTable commandTable[COMMAND_SIZE];
-    myDataTable *dataTable;
+char *lineToProcess;
+const char symbolChar = ':';
+const char dotChar = '.';
+const char spaceChar = ' ';
+const char qmChar = '\"';
+const char newlineChar = '\n';
+const char commaChar = 44; /* , char */
+int symbolLen = 0;
+int dotLen = 0;
+int symbolCounter = 0;
+int errorFlag = 0;
+int dc=0, ic=0;
+int count;
+mySymbolList *symbolList;
+myHashTable *hashTable[MAX_ARRAY_SIZE];
+myCommandTable commandTable[COMMAND_SIZE];
+myDataTable *dataTable;
 
 int main(int argc, char **argv)
 {
@@ -34,8 +34,6 @@ int main(int argc, char **argv)
 
     for (i = 1; i < argc; i++)
     {
-
-
         sprintf(file_name, "%s", argv[i]);
         fp = fopen(file_name, "r");
 
@@ -112,7 +110,7 @@ void first_parsing_line (char *line, int *count) {
 		printf("%d: Empty line found, ignoring\n",*count);
 	} else {
 		if (!isalpha(line[0]) && line[0] != '.') {
-				printf("%d: (line MUST begin with a letter OR a DOT!)\n",*count);
+			printf("%d: (line MUST begin with a letter OR a DOT!)\n",*count);
 		} else {
 			if (hasSymbol(line) != 0) {
 				if (hasSymbol(line+(symbolLen+sizeof(symbolChar))) != 0) {
@@ -122,10 +120,10 @@ void first_parsing_line (char *line, int *count) {
 						symbolPointer = getSymbol(line,hasSymbol(line));
 						mySymbolList* iter;
 						for (iter = symbolList; NULL != iter; iter = iter->next) {
-								if(strcmp(iter->Sym,symbolPointer) == 0) {
-										dupSymbol = 1;
-										printf("%d: %s (duplicate symbol found)\n",*count,line);
-								}
+							if(strcmp(iter->Sym,symbolPointer) == 0) {
+								dupSymbol = 1;
+								printf("%d: %s (duplicate symbol found)\n",*count,line);
+							}
 						}
 					}
 					if (!dupSymbol) {
@@ -181,8 +179,7 @@ void first_parsing_line (char *line, int *count) {
 						symbolList = addSymbolNode(symbolList,symbolPointer,0,1,0);
 					symbolCounter++;
 					printf("%d: %s (extern found)\n",*count,line);
-				}
-				else {
+				} else {
 					printf("%d: %s (unknown instruction line, ignoring)\n",*count,line);
 				}
 			} else {
@@ -200,7 +197,7 @@ void first_parsing_line (char *line, int *count) {
 					if (extractResult)
 						printf("%d: %s command found: (\"%s\", command number %d)\n",*count,line,dotCommand,i);
 				} else {
-							printf("%d: %s (command not found)\n",*count,line);
+					printf("%d: %s (command not found)\n",*count,line);
 				}
 			}
 		}
@@ -213,22 +210,20 @@ void strip_extra_spaces(char* str) {
   for(i=x=0; str[i]; ++i) {
 	  if (str[i+1] == '\t')
 	  		  str[i+1] = ' ';
-	  if (isspace(str[i]) && !isalpha(str[i-1]) && (str[i-1] != symbolChar) && (!isdigit(str[i+1]) || str[i+1] =='-' || str[i-1] == qmChar)) {
+	  if (isspace(str[i]) && !isalpha(str[i-1]) && (str[i-1] != symbolChar) && (!isdigit(str[i+1]) || !isdigit(str[i-1]) || str[i+1] =='-' || str[i-1] == qmChar))
 		  	  i++;
-	  	  }
 	  if(!isspace(str[i]) || (i>0 && !isspace(str[i-1])))
 		  str[x++] = str[i];
 
   }
   if (isspace(str[x]))
 	  str[x] = '\0';
-  if (isspace(str[strlen((char *)str)-1]))
-	  str[strlen((char *)str)-1] = '\0';
-  if (strchr(str,newlineChar) != NULL) {
-	  str[x-1] = '\0';
-  } else {
+  if (strchr(str,newlineChar) != NULL)
 	  str[x] = '\0';
-  }
+  else
+	  str[x] = '\0';
+  if (isspace(str[strlen((char *)str)-1]))
+  	  str[strlen((char *)str)-1] = '\0';
 }
 
 int hasSymbol(char* str) {
@@ -276,23 +271,22 @@ int extractData(char *str, char *type) {
 			return 0;
 		}
 		while (token != NULL) {
-				if ((strlen(token)<=1) && (!isdigit(token[0]))) {
-					printf("%d: Syntax Error: Empty or invalid char found.\n",count);
-					return 0;
-				}
-				token = strsep(&rwPointer,",");
+			if ((strlen(token)<=1) && (!isdigit(token[0]))) {
+				printf("%d: Syntax Error: Empty or invalid char found.\n",count);
+				return 0;
+			}
+			token = strsep(&rwPointer,",");
 		}
 		strcpy(rwString,str);
 		rwPointer = rwString;
 		token = strsep(&rwPointer,",");
 
 		while (token != NULL) {
-		        printf("TOKEN: %s\n", token);
+			printf("TOKEN: %s\n", token);
 
-		        token = strsep(&rwPointer,",");
-		        dc++;
+			token = strsep(&rwPointer,",");
+			dc++;
 		}
-
 		return 1;
 
 		} else if (strcmp(type,"string") == 0) {
@@ -304,6 +298,7 @@ int extractData(char *str, char *type) {
 			}
 			if (qmFound==2) {
 				str = str+1;
+				/* removes ending qm from string, fix it later */
 				str[strlen(str)-sizeof(qmChar)] = '\0';
 				printf("TOKEN: %s\n",str);
 				return 1;
@@ -339,39 +334,39 @@ int extractOperands(char *str, int opcode) {
 	token = strsep(&rwPointer,",");
 
 	while (token != NULL && !singleOperand) {
-					if (strcmp(token,"\0")==0 && opcode!=15) {
-						printf("%d: Syntax Error: Empty or invalid operand found.\n",count);
-						return 0;
-					}
-					token = strsep(&rwPointer,",");
-					i++;
-			}
-		if (i==2 && !singleOperand) {
-			strcpy(rwString,str);
-			rwPointer = rwString;
-
-			if (dataTable == NULL) {
-				token = strsep(&rwPointer,",");
-				dataTable = createDataNode(count,count);
-				token = strsep(&rwPointer,",");
-				dataTable = addDataNode(dataTable,count,count);
-			} else {
-				token = strsep(&rwPointer,",");
-				dataTable = addDataNode(dataTable,count,count);
-				token = strsep(&rwPointer,",");
-				dataTable = addDataNode(dataTable,count,count);
-			}
-			return 1;
-		} else if (singleOperand) {
-			printf("%d: Command 1 SRC or DEST OPERAND found.\n",count);
-			return 1;
-		} else if (opcode==15) {
-			printf("%d: Stop command found!\n",count);
-			return 1;
-		} else {
-			printf("SYNTAX ERROR:\n1. Do not place 2 commas side by side\n2. Please make sure you do not exceed 2 operands limit.\n\n");
+		if (strcmp(token,"\0")==0 && opcode!=15) {
+			printf("%d: Syntax Error: Empty or invalid operand found.\n",count);
 			return 0;
 		}
+		token = strsep(&rwPointer,",");
+		i++;
+	}
+	if (i==2 && !singleOperand) {
+		strcpy(rwString,str);
+		rwPointer = rwString;
+
+		if (dataTable == NULL) {
+			token = strsep(&rwPointer,",");
+			dataTable = createDataNode(count,count);
+			token = strsep(&rwPointer,",");
+			dataTable = addDataNode(dataTable,count,count);
+		} else {
+			token = strsep(&rwPointer,",");
+			dataTable = addDataNode(dataTable,count,count);
+			token = strsep(&rwPointer,",");
+			dataTable = addDataNode(dataTable,count,count);
+		}
+		return 1;
+	} else if (singleOperand) {
+		printf("%d: Command 1 SRC or DEST OPERAND found.\n",count);
+		return 1;
+	} else if (opcode==15) {
+		printf("%d: Stop command found!\n",count);
+		return 1;
+	} else {
+		printf("SYNTAX ERROR:\n1. Do not place 2 commas side by side\n2. Please make sure you do not exceed 2 operands limit.\n\n");
+		return 0;
+	}
 }
 char *getNextString(char* str) {
 	char *dotPos = strchr(str, spaceChar);
