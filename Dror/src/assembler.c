@@ -97,7 +97,7 @@ void init_command_table()
 	commandTable[15].command = "stop",commandTable[15].srcOperations=0,commandTable[15].destOperations=0;
 }
 void first_parsing_line (char *line, int *count) {
-	int i=0, dupSymbol=0, symbolFound=0, commandFound=0;
+	int i=0, dupSymbol=0, symbolFound=0, commandFound=0, tmp=0;
 
 	char *symbolPointer;
 	char *dotCommand;
@@ -118,26 +118,19 @@ void first_parsing_line (char *line, int *count) {
 				} else {
 					if (symbolCounter!=0) {
 						symbolPointer = getSymbol(line,hasSymbol(line));
-						mySymbolList* iter;
-						for (iter = symbolList; NULL != iter; iter = iter->next) {
-							if(strcmp(iter->Sym,symbolPointer) == 0) {
-								dupSymbol = 1;
-								printf("%d: %s (duplicate symbol found)\n",*count,line);
-							}
-						}
+						dupSymbol = findDuplicateSym(symbolList,symbolPointer);
 					}
 					if (!dupSymbol) {
 						symbolFound=1;
 						if (hasDot(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar))) != NULL) {
+							symbolPointer = getSymbol(line,hasSymbol(line));
 							dotCommand = getNextString(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar)+sizeof(dotChar)));
 							if (strcmp(dotCommand,"string") == 0) {
+								tmp = dc;
 								extractResult = extractSymData("string");
-								if (extractResult)
-									printf("%d: %s (string found)\n",*count,line);
 							} else if (strcmp(dotCommand,"data") == 0) {
+								tmp = dc;
 								extractResult = extractSymData("data");
-								if (extractResult)
-									printf("%d: %s (data found)\n",*count,line);
 							} else {
 								printf("%d: %s (unknown instruction line, ignoring)\n",*count,line);
 							}
@@ -150,16 +143,11 @@ void first_parsing_line (char *line, int *count) {
 								symbolList = addSymbolNode(symbolList,symbolPointer,100,0,0);
 							symbolCounter++;
 							dotCommand = getNextString(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar)));
-							i=-1;
-							while (i<=15 && !commandFound) {
-								if (strcmp(dotCommand,commandTable[++i].command)==0) {
-									commandFound=1;
-								}
-							}
+							commandFound = findCommand(dotCommand);
 							if (commandFound) {
-								extractResult = extractSymMacro(i);
+								extractResult = extractSym(i);
 								if (extractResult)
-									printf("%d: %s (\"%s\", command number %d)\n",*count,line,dotCommand,i);
+									printf("%d: %s (\"%s\")\n",*count,line,dotCommand);
 							} else {
 								printf("%d: %s (command not found)\n",*count,line);
 							}
@@ -186,16 +174,11 @@ void first_parsing_line (char *line, int *count) {
 				symbolFound=0;
 				i=0;
 				dotCommand = getNextString(line);
-				while (i<=15 && !commandFound) {
-					if (strcmp(dotCommand,commandTable[i].command)==0) {
-						commandFound=1;
-					}
-					i++;
-				}
+				commandFound = findCommand(dotCommand);
 				if (commandFound) {
 					extractResult = extractOperands(line+(sizeof(spaceChar)+strlen((char *)dotCommand)),i);
 					if (extractResult)
-						printf("%d: %s command found: (\"%s\", command number %d)\n",*count,line,dotCommand,i);
+						printf("%d: %s command found: (\"%s\")\n",*count,line,dotCommand);
 				} else {
 					printf("%d: %s (command not found)\n",*count,line);
 				}
@@ -203,7 +186,26 @@ void first_parsing_line (char *line, int *count) {
 		}
 	}
 }
-
+int findDuplicateSym(mySymbolList *symbolList,char *sym) {
+	mySymbolList* iter;
+	for (iter = symbolList; NULL != iter; iter = iter->next) {
+		if(strcmp(iter->Sym,sym) == 0) {
+			printf("Duplicate symbol found!\n");
+			return 1;
+		}
+	}
+	return 0;
+}
+int findCommand(char *command) {
+	int i=0;
+	while (i<COMMAND_SIZE) {
+		if (strcmp(command,commandTable[i].command)==0) {
+			return 1;
+		}
+		i++;
+	}
+	return 0;
+}
 void strip_extra_spaces(char* str) {
   int i,x;
 
@@ -214,7 +216,6 @@ void strip_extra_spaces(char* str) {
 		  	  i++;
 	  if(!isspace(str[i]) || (i>0 && !isspace(str[i-1])))
 		  str[x++] = str[i];
-
   }
   if (isspace(str[x]))
 	  str[x] = '\0';
@@ -282,10 +283,14 @@ int extractData(char *str, char *type) {
 		token = strsep(&rwPointer,",");
 
 		while (token != NULL) {
+			if (dc == 0) {
+				dataTable = createDataNode(dc++,(int)*token);
+			} else {
+				dataTable = addDataNode(dataTable,dc++,(int)*token);
+			}
 			printf("TOKEN: %s\n", token);
 
 			token = strsep(&rwPointer,",");
-			dc++;
 		}
 		return 1;
 
@@ -300,7 +305,16 @@ int extractData(char *str, char *type) {
 				str = str+1;
 				/* removes ending qm from string, fix it later */
 				str[strlen(str)-sizeof(qmChar)] = '\0';
-				printf("TOKEN: %s\n",str);
+
+				while (str[0]!='\0') {
+					if (dc == 0) {
+						dataTable = createDataNode(dc++,(int)str[0]);
+						str++;
+					} else {
+						dataTable = addDataNode(dataTable,dc++,(int)str[0]);
+						str++;
+					}
+				}
 				return 1;
 			} else if (qmFound<=2) {
 				printf("%d: Syntax Error: No quotation marks found for string!\n",count);
@@ -345,7 +359,7 @@ int extractOperands(char *str, int opcode) {
 		strcpy(rwString,str);
 		rwPointer = rwString;
 
-		if (dataTable == NULL) {
+		/*if (dataTable == NULL) {
 			token = strsep(&rwPointer,",");
 			dataTable = createDataNode(count,count);
 			token = strsep(&rwPointer,",");
@@ -355,7 +369,7 @@ int extractOperands(char *str, int opcode) {
 			dataTable = addDataNode(dataTable,count,count);
 			token = strsep(&rwPointer,",");
 			dataTable = addDataNode(dataTable,count,count);
-		}
+		}*/
 		return 1;
 	} else if (singleOperand) {
 		printf("%d: Command 1 SRC or DEST OPERAND found.\n",count);
