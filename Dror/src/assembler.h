@@ -29,6 +29,8 @@
 #define TYPE_OFFSET 16
 #define RSVD_OFFSET 17
 
+#define MAX_DIGIT 8
+
 #define MOV 0
 #define CMP 1
 #define ADD 2
@@ -45,8 +47,17 @@
 #define JSR 13
 #define RTS 14
 #define STOP 15
-#define extractSymMacro(X) extractOperands(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar)+sizeof(dotChar)+strlen(dotCommand)),X);
-#define extractSymData(X) extractData(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar)+sizeof(dotChar)+strlen(dotCommand)+sizeof(spaceChar)),X);
+#define extractSym(X) extractOperands(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar)+sizeof(dotChar)+strlen(dotCommand)),X);
+#define extractSymData(X) \
+		extractData(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar)+sizeof(dotChar)+strlen(dotCommand)+sizeof(spaceChar)),X);\
+		if (extractResult) {\
+			printf("%d: %s ("X" found)\n",*count,line);\
+		if (symbolCounter == 0)\
+			symbolList = createSymbolNode(symbolPointer,tmp,0,0);\
+		else\
+			symbolList = addSymbolNode(symbolList,symbolPointer,tmp,0,0);\
+		symbolCounter++;\
+	}
 
 typedef struct symbolLists {
 	char *Sym;
@@ -92,8 +103,43 @@ char *getSymbol(char* str, int pos);
 char *getNextString(char* str);
 char *hasQM(char* str);
 int extractOperands(char *str, int opcode);
+int findCommand(char *command);
+int findDuplicateSym(mySymbolList *symbolList,char *sym);
 
 mySymbolList *createSymbolNode (char* str, unsigned int dc, int external, int action);
 mySymbolList *addSymbolNode (mySymbolList* symbolList, char* str, unsigned int dc, int external, int action);
 myDataTable *createDataNode (int dc, unsigned int data);
 myDataTable *addDataNode (myDataTable* dataTable, int dc, unsigned int data);
+
+char *to_base(int num, int base, char *result, int pad)
+{
+	int index = 0, i;
+	char tmp[MAX_DIGIT + 1];
+	for (i = 0; i < MAX_DIGIT; i++) /* reset all the cells */
+	{
+		result[i] = '0';
+		tmp[i] = '0';
+	}
+
+	while (num != 0)
+	{
+		tmp[index] = (num % base) + '0';
+		num /= base;
+		index++;
+	}
+
+	for (i = 0; i < MAX_DIGIT; i++)
+	{
+		result[i] = tmp[MAX_DIGIT - 1 - i];
+	}
+    result[i] = '\0';
+
+    if (pad)
+    {
+        return result;
+    }
+    else
+    {
+        return result + MAX_DIGIT - index;
+    }
+}
