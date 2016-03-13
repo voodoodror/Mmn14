@@ -79,22 +79,22 @@ void init_hash_table(myHashTable *il)
 }
 void init_command_table()
 {
-	commandTable[0].command = "mov",commandTable[0].srcOperations=1,commandTable[0].destOperations=1;
-	commandTable[1].command = "cmp",commandTable[1].srcOperations=1,commandTable[1].destOperations=1;
-	commandTable[2].command = "add",commandTable[2].srcOperations=1,commandTable[2].destOperations=1;
-	commandTable[3].command = "sub",commandTable[3].srcOperations=1,commandTable[3].destOperations=1;
-	commandTable[4].command = "not",commandTable[4].srcOperations=0,commandTable[4].destOperations=1;
-	commandTable[5].command = "clr",commandTable[5].srcOperations=0,commandTable[5].destOperations=1;
-	commandTable[6].command = "lea",commandTable[6].srcOperations=1,commandTable[6].destOperations=1;
-	commandTable[7].command = "inc",commandTable[7].srcOperations=0,commandTable[7].destOperations=1;
-	commandTable[8].command = "dec",commandTable[8].srcOperations=0,commandTable[8].destOperations=1;
-	commandTable[9].command = "jmp",commandTable[9].srcOperations=0,commandTable[9].destOperations=1;
-	commandTable[10].command = "bne",commandTable[10].srcOperations=0,commandTable[10].destOperations=1;
-	commandTable[11].command = "red",commandTable[11].srcOperations=0,commandTable[11].destOperations=1;
-	commandTable[12].command = "prn",commandTable[12].srcOperations=0,commandTable[12].destOperations=1;
-	commandTable[13].command = "jsr",commandTable[13].srcOperations=0,commandTable[13].destOperations=1;
-	commandTable[14].command = "rts",commandTable[14].srcOperations=0,commandTable[14].destOperations=0;
-	commandTable[15].command = "stop",commandTable[15].srcOperations=0,commandTable[15].destOperations=0;
+	commandTable[0].command = "mov",commandTable[0].srcOperations=1,commandTable[0].destOperations=1,commandTable[0].srcAddrType0=0,commandTable[0].srcAddrType1=0,commandTable[0].srcAddrType2=0,commandTable[0].srcAddrType3=0,commandTable[0].srcAddrType2n3=0,commandTable[0].destAddrType0=0,commandTable[0].destAddrType1=0,commandTable[0].destAddrType2=0,commandTable[0].destAddrType3=0,commandTable[0].destAddrType2n3=0;
+	commandTable[1].command = "cmp",commandTable[1].srcOperations=1,commandTable[1].destOperations=1,commandTable[1].srcAddrType0=0,commandTable[1].srcAddrType1=0,commandTable[1].srcAddrType2=0,commandTable[1].srcAddrType3=0,commandTable[1].srcAddrType2n3=0,commandTable[1].destAddrType0=0,commandTable[1].destAddrType1=0,commandTable[1].destAddrType2=0,commandTable[1].destAddrType3=0,commandTable[1].destAddrType2n3=0;
+	commandTable[2].command = "add",commandTable[2].srcOperations=1,commandTable[2].destOperations=1,commandTable[2].srcAddrType0=0,commandTable[2].srcAddrType1=0,commandTable[2].srcAddrType2=0,commandTable[2].srcAddrType3=0,commandTable[2].srcAddrType2n3=0,commandTable[2].destAddrType0=0,commandTable[2].destAddrType1=0,commandTable[2].destAddrType2=0,commandTable[2].destAddrType3=0,commandTable[2].destAddrType2n3=0;
+	commandTable[3].command = "sub",commandTable[3].srcOperations=1,commandTable[3].destOperations=1,commandTable[3].srcAddrType0=0,commandTable[3].srcAddrType1=0,commandTable[3].srcAddrType2=0,commandTable[3].srcAddrType3=0,commandTable[3].srcAddrType2n3=0,commandTable[3].destAddrType0=0,commandTable[3].destAddrType1=0,commandTable[3].destAddrType2=0,commandTable[3].destAddrType3=0,commandTable[3].destAddrType2n3=0;
+	commandTable[4].command = "not",commandTable[4].srcOperations=0,commandTable[4].destOperations=1,commandTable[4].srcAddrType0=0,commandTable[4].srcAddrType1=0,commandTable[4].srcAddrType2=0,commandTable[4].srcAddrType3=0,commandTable[4].srcAddrType2n3=0,commandTable[4].destAddrType0=0,commandTable[4].destAddrType1=0,commandTable[4].destAddrType2=0,commandTable[4].destAddrType3=0,commandTable[4].destAddrType2n3=0;
+	commandTable[5].command = "clr",commandTable[5].srcOperations=0,commandTable[5].destOperations=1,commandTable[5].srcAddrType0=0,commandTable[5].srcAddrType1=0,commandTable[5].srcAddrType2=0,commandTable[5].srcAddrType3=0,commandTable[5].srcAddrType2n3=0,commandTable[5].destAddrType0=0,commandTable[5].destAddrType1=0,commandTable[5].destAddrType2=0,commandTable[5].destAddrType3=0,commandTable[5].destAddrType2n3=0;
+	commandTable[6].command = "lea",commandTable[6].srcOperations=1,commandTable[6].destOperations=1,commandTable[6].srcAddrType0=0,commandTable[6].srcAddrType1=0,commandTable[6].srcAddrType2=0,commandTable[6].srcAddrType3=0,commandTable[6].srcAddrType2n3=0,commandTable[6].destAddrType0=0,commandTable[6].destAddrType1=0,commandTable[6].destAddrType2=0,commandTable[6].destAddrType3=0,commandTable[6].destAddrType2n3=0;
+	commandTable[7].command = "inc",commandTable[7].srcOperations=0,commandTable[7].destOperations=1,commandTable[7].srcAddrType0=0,commandTable[7].srcAddrType1=0,commandTable[7].srcAddrType2=0,commandTable[7].srcAddrType3=0,commandTable[7].srcAddrType2n3=0,commandTable[7].destAddrType0=0,commandTable[7].destAddrType1=0,commandTable[7].destAddrType2=0,commandTable[7].destAddrType3=0,commandTable[7].destAddrType2n3=0;
+	commandTable[8].command = "dec",commandTable[8].srcOperations=0,commandTable[8].destOperations=1,commandTable[8].srcAddrType0=0,commandTable[8].srcAddrType1=0,commandTable[8].srcAddrType2=0,commandTable[8].srcAddrType3=0,commandTable[8].srcAddrType2n3=0,commandTable[8].destAddrType0=0,commandTable[8].destAddrType1=0,commandTable[8].destAddrType2=0,commandTable[8].destAddrType3=0,commandTable[8].destAddrType2n3=0;
+	commandTable[9].command = "jmp",commandTable[9].srcOperations=0,commandTable[9].destOperations=1,commandTable[9].srcAddrType0=0,commandTable[9].srcAddrType1=0,commandTable[9].srcAddrType2=0,commandTable[9].srcAddrType3=0,commandTable[9].srcAddrType2n3=0,commandTable[9].destAddrType0=0,commandTable[9].destAddrType1=0,commandTable[9].destAddrType2=0,commandTable[9].destAddrType3=0,commandTable[9].destAddrType2n3=0;
+	commandTable[10].command = "bne",commandTable[10].srcOperations=0,commandTable[10].destOperations=1,commandTable[10].srcAddrType0=0,commandTable[10].srcAddrType1=0,commandTable[10].srcAddrType2=0,commandTable[10].srcAddrType3=0,commandTable[10].srcAddrType2n3=0,commandTable[10].destAddrType0=0,commandTable[10].destAddrType1=0,commandTable[10].destAddrType2=0,commandTable[10].destAddrType3=0,commandTable[10].destAddrType2n3=0;
+	commandTable[11].command = "red",commandTable[11].srcOperations=0,commandTable[11].destOperations=1,commandTable[11].srcAddrType0=0,commandTable[11].srcAddrType1=0,commandTable[11].srcAddrType2=0,commandTable[11].srcAddrType3=0,commandTable[11].srcAddrType2n3=0,commandTable[11].destAddrType0=0,commandTable[11].destAddrType1=0,commandTable[11].destAddrType2=0,commandTable[11].destAddrType3=0,commandTable[11].destAddrType2n3=0;
+	commandTable[12].command = "prn",commandTable[12].srcOperations=0,commandTable[12].destOperations=1,commandTable[12].srcAddrType0=0,commandTable[12].srcAddrType1=0,commandTable[12].srcAddrType2=0,commandTable[12].srcAddrType3=0,commandTable[12].srcAddrType2n3=0,commandTable[12].destAddrType0=0,commandTable[12].destAddrType1=0,commandTable[12].destAddrType2=0,commandTable[12].destAddrType3=0,commandTable[12].destAddrType2n3=0;
+	commandTable[13].command = "jsr",commandTable[13].srcOperations=0,commandTable[13].destOperations=1,commandTable[13].srcAddrType0=0,commandTable[13].srcAddrType1=0,commandTable[13].srcAddrType2=0,commandTable[13].srcAddrType3=0,commandTable[13].srcAddrType2n3=0,commandTable[13].destAddrType0=0,commandTable[13].destAddrType1=0,commandTable[13].destAddrType2=0,commandTable[13].destAddrType3=0,commandTable[13].destAddrType2n3=0;
+	commandTable[14].command = "rts",commandTable[14].srcOperations=0,commandTable[14].destOperations=0,commandTable[14].srcAddrType0=0,commandTable[14].srcAddrType1=0,commandTable[14].srcAddrType2=0,commandTable[14].srcAddrType3=0,commandTable[14].srcAddrType2n3=0,commandTable[14].destAddrType0=0,commandTable[14].destAddrType1=0,commandTable[14].destAddrType2=0,commandTable[14].destAddrType3=0,commandTable[14].destAddrType2n3=0;
+	commandTable[15].command = "stop",commandTable[15].srcOperations=0,commandTable[15].destOperations=0,commandTable[15].srcAddrType0=0,commandTable[15].srcAddrType1=0,commandTable[15].srcAddrType2=0,commandTable[15].srcAddrType3=0,commandTable[15].srcAddrType2n3=0,commandTable[15].destAddrType0=0,commandTable[15].destAddrType1=0,commandTable[15].destAddrType2=0,commandTable[15].destAddrType3=0,commandTable[15].destAddrType2n3=0;
 }
 void first_parsing_line (char *line, int *count) {
 	int i=0, dupSymbol=0, symbolFound=0, commandFound=0, tmp=0;
@@ -303,8 +303,8 @@ int extractData(char *str, char *type) {
 			}
 			if (qmFound==2) {
 				str = str+1;
-				/* removes ending qm from string, fix it later */
-				str[strlen(str)-sizeof(qmChar)] = '\0';
+
+				str[strlen(str)] = '\0';
 
 				while (str[0]!='\0') {
 					if (dc == 0) {

@@ -85,6 +85,17 @@ typedef struct commandTables {
 	int opcode;
 	int srcOperations;
 	int destOperations;
+	unsigned int srcAddrType0 : 1;
+	unsigned int srcAddrType1 : 1;
+	unsigned int srcAddrType2 : 1;
+	unsigned int srcAddrType3 : 1;
+	unsigned int srcAddrType2n3 : 1;
+	unsigned int destAddrType0 : 1;
+	unsigned int destAddrType1 : 1;
+	unsigned int destAddrType2 : 1;
+	unsigned int destAddrType3 : 1;
+	unsigned int destAddrType2n3 : 1;
+
 } myCommandTable;
 
 typedef struct dataTables {
