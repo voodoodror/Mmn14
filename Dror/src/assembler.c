@@ -331,7 +331,7 @@ int extractOperands(char *str, int opcode) {
 	char *rwPointer;
 	strcpy(rwString,str);
 	char *token;
-	int i=0,singleOperand=0,noOperands=0;
+	int i=0,singleOperand=0,noOperands=0,srcAddr=-1,destAddr=-1;
 	rwPointer = rwString;
 
 	token = strchr(str,commaChar);
@@ -365,22 +365,27 @@ int extractOperands(char *str, int opcode) {
 		strcpy(rwString,str);
 		rwPointer = rwString;
 
-		/*if (dataTable == NULL) {
-			token = strsep(&rwPointer,",");
-			dataTable = createDataNode(count,count);
-			token = strsep(&rwPointer,",");
-			dataTable = addDataNode(dataTable,count,count);
-		} else {
-			token = strsep(&rwPointer,",");
-			dataTable = addDataNode(dataTable,count,count);
-			token = strsep(&rwPointer,",");
-			dataTable = addDataNode(dataTable,count,count);
-		}*/
+		token = strsep(&rwPointer,",");
+		srcAddr = recognizeOperand(token);
+
+		token = strsep(&rwPointer,",");
+		destAddr = recognizeOperand(token);
+
+		if (srcAddr!=-1 && destAddr!=-1) {
+			if(validOperOpcode(opcode,srcAddr,destAddr))
+				printf("GOOD TO GO!\n");
+		}
+
+		printf("srcAddr: %d, destAddr: %d\n",srcAddr,destAddr);
+
 		return 1;
 	} else if (singleOperand) {
-		if (singleOperand)
-		printf("%d: Command 1 SRC or DEST OPERAND found.\n",count);
-		return 1;
+		if (recognizeOperand(token)!=-1) {
+			printf("%d: srcAddr: %d\n",count,recognizeOperand(token));
+			validOperOpcode(opcode,srcAddr,-1);
+			return 1;
+		}
+		return 0;
 	} else if (noOperands) {
 		printf("%d: STOP or RTS command found!\n",count);
 		return 1;
@@ -388,6 +393,67 @@ int extractOperands(char *str, int opcode) {
 		printf("SYNTAX ERROR:\n1. Do not place 2 commas side by side\n2. Please make sure you do not exceed 2 operands limit.\n\n");
 		return 0;
 	}
+}
+int recognizeOperand(char *str) {
+	unsigned int tempNum;
+	int invalidResult=-1;
+
+	if (str[0] == 'r') {
+		if (strlen(str)==2) {
+			str=str+1;
+			tempNum = atoi(str);
+			if (tempNum>=0 && tempNum<=7) {
+				return 3;
+			} else {
+				printf("Invalid register number.\n");
+				return invalidResult;
+			}
+		} else {
+			printf("Too LESS or MUCH chars for register operand.\n");
+			return invalidResult;
+		}
+	} else if (str[0] == '#') {
+		if (str[1] == '-') {
+			str = str+2;
+			tempNum = atoi(str);
+			if (tempNum<=16385 && tempNum>0) {
+				return 0;
+			} else {
+				printf("Invalid number entered.\n");
+				return invalidResult;
+			}
+		} else {
+			str = str+2;
+			tempNum = atoi(str);
+			if (tempNum<=16383 && tempNum>0) {
+				return 0;
+			} else {
+				printf("Invalid number entered.\n");
+				return invalidResult;
+			}
+		}
+	} else if (strcmp(str,"*")==0) {
+		return 21;
+	} else if (strcmp(str,"**")==0) {
+		return 22;
+	} else if (strcmp(str,"***")==0) {
+		return 23;
+	} else {
+		while (str!=NULL) {
+			if (str[0]>=65 && str[0]<=90)
+				return 1;
+			str=str+1;
+		}
+		return invalidResult;
+	}
+}
+int validOperOpcode(int opcode, int srcAddr, int destAddr) {
+	if (srcAddr!=-1 && destAddr!=-1) {
+		/*comparison with opcode*/
+	} else if (srcAddr!=-1 && destAddr==-1) {
+		/*Single operand validation with opcode*/
+	}
+	return 1;
 }
 char *getNextString(char* str) {
 	char *dotPos = strchr(str, spaceChar);
