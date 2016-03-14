@@ -116,6 +116,8 @@ char *hasQM(char* str);
 int extractOperands(char *str, int opcode);
 int findCommand(char *command);
 int findDuplicateSym(mySymbolList *symbolList,char *sym);
+int recognizeOperand(char *str);
+int validOperOpcode(int opcode, int srcAddr, int destAddr);
 
 mySymbolList *createSymbolNode (char* str, unsigned int dc, int external, int action);
 mySymbolList *addSymbolNode (mySymbolList* symbolList, char* str, unsigned int dc, int external, int action);
