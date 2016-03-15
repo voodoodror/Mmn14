@@ -58,6 +58,13 @@
 			symbolList = addSymbolNode(symbolList,symbolPointer,tmp,0,0);\
 		symbolCounter++;\
 	}
+#define reverseDigits() \
+		memcpy(&tmp,&addressingSrc[i-2],sizeof(int));\
+		memcpy(&addressingSrc[i-2],&addressingSrc[i-1],sizeof(int));\
+		memcpy(&addressingSrc[i-1],&tmp,sizeof(int));\
+		memcpy(&tmp,&addressingDest[j-2],sizeof(int));\
+		memcpy(&addressingDest[j-2],&addressingDest[j-1],sizeof(int));\
+		memcpy(&addressingDest[j-1],&tmp,sizeof(int));
 
 typedef struct symbolLists {
 	char *Sym;
@@ -68,7 +75,6 @@ typedef struct symbolLists {
 } mySymbolList;
 
 typedef struct hashTables {
-	unsigned int addr;
     unsigned int era        : ERA_WIDTH;
     unsigned int dest_reg   : DREG_WIDTH;
     unsigned int dest_addr  : DADDR_WIDTH;
@@ -85,16 +91,6 @@ typedef struct commandTables {
 	int opcode;
 	int srcOperations;
 	int destOperations;
-	unsigned int srcAddrType0 : 1;
-	unsigned int srcAddrType1 : 1;
-	unsigned int srcAddrType2 : 1;
-	unsigned int srcAddrType3 : 1;
-	unsigned int srcAddrType2n3 : 1;
-	unsigned int destAddrType0 : 1;
-	unsigned int destAddrType1 : 1;
-	unsigned int destAddrType2 : 1;
-	unsigned int destAddrType3 : 1;
-	unsigned int destAddrType2n3 : 1;
 
 } myCommandTable;
 
