@@ -21,9 +21,11 @@ mySymbolList *symbolList;
 myHashTable *hashTable[MAX_ARRAY_SIZE];
 myCommandTable commandTable[COMMAND_SIZE];
 myDataTable *dataTable;
+int addressingTable[82] = { 1000, 1001, 10021, 10022, 10023, 1003, 1011, 10121, 10122, 10123, 10123, 1013, 1100, 1101, 11011, 110121, 110122, 110123, 11013, 11021, 11022, 11023, 1103, 1110, 1111, 11111, 111121, 111122, 111123, 11113, 11121, 11122, 11123, 1113, 11210, 11211, 112121, 112122, 112123, 11213, 11311, 113123, 1200, 1201, 12021, 12022, 12023, 1203, 1211, 12121, 12122, 12123, 12123, 1213, 1300, 1301, 13021, 13022, 13023, 1303, 1311, 13121, 13122, 13123, 1313, 1411, 1413, 1511, 1513, 1601, 16023, 1611, 1613, 1711, 1713, 1811, 1813, 1911, 19121, 19122, 19123, 1913 };
 
 int main(int argc, char **argv)
 {
+
     int i;
 
     FILE *fp;
@@ -66,7 +68,6 @@ int main(int argc, char **argv)
 }
 void init_hash_table(myHashTable *il)
 {
-	il->addr = 0;
     il->era = 0;
     il->dest_reg = 0;
     il->dest_addr = 0;
@@ -79,25 +80,25 @@ void init_hash_table(myHashTable *il)
 }
 void init_command_table()
 {
-	commandTable[0].command = "mov",commandTable[0].srcOperations=1,commandTable[0].destOperations=1,commandTable[0].srcAddrType0=1,commandTable[0].srcAddrType1=1,commandTable[0].srcAddrType2=1,commandTable[0].srcAddrType3=1,commandTable[0].srcAddrType2n3=0,commandTable[0].destAddrType0=0,commandTable[0].destAddrType1=1,commandTable[0].destAddrType2=1,commandTable[0].destAddrType3=1,commandTable[0].destAddrType2n3=1;
-	commandTable[1].command = "cmp",commandTable[1].srcOperations=1,commandTable[1].destOperations=1,commandTable[1].srcAddrType0=1,commandTable[1].srcAddrType1=1,commandTable[1].srcAddrType2=1,commandTable[1].srcAddrType3=1,commandTable[1].srcAddrType2n3=0,commandTable[1].destAddrType0=1,commandTable[1].destAddrType1=1,commandTable[1].destAddrType2=1,commandTable[1].destAddrType3=1,commandTable[1].destAddrType2n3=0;
-	commandTable[2].command = "add",commandTable[2].srcOperations=1,commandTable[2].destOperations=1,commandTable[2].srcAddrType0=1,commandTable[2].srcAddrType1=1,commandTable[2].srcAddrType2=1,commandTable[2].srcAddrType3=1,commandTable[2].srcAddrType2n3=0,commandTable[2].destAddrType0=0,commandTable[2].destAddrType1=1,commandTable[2].destAddrType2=1,commandTable[2].destAddrType3=1,commandTable[2].destAddrType2n3=1;
-	commandTable[3].command = "sub",commandTable[3].srcOperations=1,commandTable[3].destOperations=1,commandTable[3].srcAddrType0=1,commandTable[3].srcAddrType1=1,commandTable[3].srcAddrType2=1,commandTable[3].srcAddrType3=1,commandTable[3].srcAddrType2n3=0,commandTable[3].destAddrType0=0,commandTable[3].destAddrType1=1,commandTable[3].destAddrType2=1,commandTable[3].destAddrType3=1,commandTable[3].destAddrType2n3=0;
-	commandTable[4].command = "not",commandTable[4].srcOperations=0,commandTable[4].destOperations=1,commandTable[4].srcAddrType0=0,commandTable[4].srcAddrType1=0,commandTable[4].srcAddrType2=0,commandTable[4].srcAddrType3=0,commandTable[4].srcAddrType2n3=0,commandTable[4].destAddrType0=0,commandTable[4].destAddrType1=1,commandTable[4].destAddrType2=0,commandTable[4].destAddrType3=1,commandTable[4].destAddrType2n3=0;
-	commandTable[5].command = "clr",commandTable[5].srcOperations=0,commandTable[5].destOperations=1,commandTable[5].srcAddrType0=0,commandTable[5].srcAddrType1=0,commandTable[5].srcAddrType2=0,commandTable[5].srcAddrType3=0,commandTable[5].srcAddrType2n3=0,commandTable[5].destAddrType0=0,commandTable[5].destAddrType1=1,commandTable[5].destAddrType2=0,commandTable[5].destAddrType3=1,commandTable[5].destAddrType2n3=0;
-	commandTable[6].command = "lea",commandTable[6].srcOperations=1,commandTable[6].destOperations=1,commandTable[6].srcAddrType0=0,commandTable[6].srcAddrType1=1,commandTable[6].srcAddrType2=0,commandTable[6].srcAddrType3=0,commandTable[6].srcAddrType2n3=1,commandTable[6].destAddrType0=0,commandTable[6].destAddrType1=1,commandTable[6].destAddrType2=0,commandTable[6].destAddrType3=1,commandTable[6].destAddrType2n3=0;
-	commandTable[7].command = "inc",commandTable[7].srcOperations=0,commandTable[7].destOperations=1,commandTable[7].srcAddrType0=0,commandTable[7].srcAddrType1=0,commandTable[7].srcAddrType2=0,commandTable[7].srcAddrType3=0,commandTable[7].srcAddrType2n3=0,commandTable[7].destAddrType0=0,commandTable[7].destAddrType1=1,commandTable[7].destAddrType2=0,commandTable[7].destAddrType3=1,commandTable[7].destAddrType2n3=0;
-	commandTable[8].command = "dec",commandTable[8].srcOperations=0,commandTable[8].destOperations=1,commandTable[8].srcAddrType0=0,commandTable[8].srcAddrType1=0,commandTable[8].srcAddrType2=0,commandTable[8].srcAddrType3=0,commandTable[8].srcAddrType2n3=0,commandTable[8].destAddrType0=0,commandTable[8].destAddrType1=1,commandTable[8].destAddrType2=0,commandTable[8].destAddrType3=1,commandTable[8].destAddrType2n3=0;
-	commandTable[9].command = "jmp",commandTable[9].srcOperations=0,commandTable[9].destOperations=1,commandTable[9].srcAddrType0=0,commandTable[9].srcAddrType1=0,commandTable[9].srcAddrType2=0,commandTable[9].srcAddrType3=0,commandTable[9].srcAddrType2n3=0,commandTable[9].destAddrType0=0,commandTable[9].destAddrType1=1,commandTable[9].destAddrType2=1,commandTable[9].destAddrType3=1,commandTable[9].destAddrType2n3=0;
-	commandTable[10].command = "bne",commandTable[10].srcOperations=0,commandTable[10].destOperations=1,commandTable[10].srcAddrType0=0,commandTable[10].srcAddrType1=0,commandTable[10].srcAddrType2=0,commandTable[10].srcAddrType3=0,commandTable[10].srcAddrType2n3=0,commandTable[10].destAddrType0=0,commandTable[10].destAddrType1=1,commandTable[10].destAddrType2=1,commandTable[10].destAddrType3=1,commandTable[10].destAddrType2n3=0;
-	commandTable[11].command = "red",commandTable[11].srcOperations=0,commandTable[11].destOperations=1,commandTable[11].srcAddrType0=0,commandTable[11].srcAddrType1=0,commandTable[11].srcAddrType2=0,commandTable[11].srcAddrType3=0,commandTable[11].srcAddrType2n3=0,commandTable[11].destAddrType0=0,commandTable[11].destAddrType1=1,commandTable[11].destAddrType2=1,commandTable[11].destAddrType3=1,commandTable[11].destAddrType2n3=0;
-	commandTable[12].command = "prn",commandTable[12].srcOperations=0,commandTable[12].destOperations=1,commandTable[12].srcAddrType0=0,commandTable[12].srcAddrType1=0,commandTable[12].srcAddrType2=0,commandTable[12].srcAddrType3=0,commandTable[12].srcAddrType2n3=0,commandTable[12].destAddrType0=1,commandTable[12].destAddrType1=1,commandTable[12].destAddrType2=1,commandTable[12].destAddrType3=1,commandTable[12].destAddrType2n3=0;
-	commandTable[13].command = "jsr",commandTable[13].srcOperations=0,commandTable[13].destOperations=1,commandTable[13].srcAddrType0=0,commandTable[13].srcAddrType1=0,commandTable[13].srcAddrType2=0,commandTable[13].srcAddrType3=0,commandTable[13].srcAddrType2n3=0,commandTable[13].destAddrType0=0,commandTable[13].destAddrType1=1,commandTable[13].destAddrType2=0,commandTable[13].destAddrType3=0,commandTable[13].destAddrType2n3=1;
-	commandTable[14].command = "rts",commandTable[14].srcOperations=0,commandTable[14].destOperations=0,commandTable[14].srcAddrType0=0,commandTable[14].srcAddrType1=0,commandTable[14].srcAddrType2=0,commandTable[14].srcAddrType3=0,commandTable[14].srcAddrType2n3=0,commandTable[14].destAddrType0=0,commandTable[14].destAddrType1=0,commandTable[14].destAddrType2=0,commandTable[14].destAddrType3=0,commandTable[14].destAddrType2n3=0;
-	commandTable[15].command = "stop",commandTable[15].srcOperations=0,commandTable[15].destOperations=0,commandTable[15].srcAddrType0=0,commandTable[15].srcAddrType1=0,commandTable[15].srcAddrType2=0,commandTable[15].srcAddrType3=0,commandTable[15].srcAddrType2n3=0,commandTable[15].destAddrType0=0,commandTable[15].destAddrType1=0,commandTable[15].destAddrType2=0,commandTable[15].destAddrType3=0,commandTable[15].destAddrType2n3=0;
+	commandTable[0].command = "mov",commandTable[0].srcOperations=1,commandTable[0].destOperations=1;
+	commandTable[1].command = "cmp",commandTable[1].srcOperations=1,commandTable[1].destOperations=1;
+	commandTable[2].command = "add",commandTable[2].srcOperations=1,commandTable[2].destOperations=1;
+	commandTable[3].command = "sub",commandTable[3].srcOperations=1,commandTable[3].destOperations=1;
+	commandTable[4].command = "not",commandTable[4].srcOperations=0,commandTable[4].destOperations=1;
+	commandTable[5].command = "clr",commandTable[5].srcOperations=0,commandTable[5].destOperations=1;
+	commandTable[6].command = "lea",commandTable[6].srcOperations=1,commandTable[6].destOperations=1;
+	commandTable[7].command = "inc",commandTable[7].srcOperations=0,commandTable[7].destOperations=1;
+	commandTable[8].command = "dec",commandTable[8].srcOperations=0,commandTable[8].destOperations=1;
+	commandTable[9].command = "jmp",commandTable[9].srcOperations=0,commandTable[9].destOperations=1;
+	commandTable[10].command = "bne",commandTable[10].srcOperations=0,commandTable[10].destOperations=1;
+	commandTable[11].command = "red",commandTable[11].srcOperations=0,commandTable[11].destOperations=1;
+	commandTable[12].command = "prn",commandTable[12].srcOperations=0,commandTable[12].destOperations=1;
+	commandTable[13].command = "jsr",commandTable[13].srcOperations=0,commandTable[13].destOperations=1;
+	commandTable[14].command = "rts",commandTable[14].srcOperations=0,commandTable[14].destOperations=0;
+	commandTable[15].command = "stop",commandTable[15].srcOperations=0,commandTable[15].destOperations=0;
 }
 void first_parsing_line (char *line, int *count) {
-	int i=0, dupSymbol=0, symbolFound=0, commandFound=0, tmp=0;
+	int dupSymbol=0, symbolFound=0, commandFound=0, tmp=0;
 
 	char *symbolPointer;
 	char *dotCommand;
@@ -172,7 +173,6 @@ void first_parsing_line (char *line, int *count) {
 				}
 			} else {
 				symbolFound=0;
-				i=0;
 				dotCommand = getNextString(line);
 				commandFound = findCommand(dotCommand);
 				if (commandFound!=-1) {
@@ -372,18 +372,28 @@ int extractOperands(char *str, int opcode) {
 		destAddr = recognizeOperand(token);
 
 		if (srcAddr!=-1 && destAddr!=-1) {
-			if(validOperOpcode(opcode,srcAddr,destAddr))
+			if(validOperOpcode(opcode,srcAddr,destAddr)) {
 				printf("GOOD TO GO!\n");
+				return 1;
+			} else {
+				printf("Invalid operands received for this command.\n");
+				return 0;
+			}
 		}
 
-		printf("srcAddr: %d, destAddr: %d\n",srcAddr,destAddr);
+
 
 		return 1;
 	} else if (singleOperand) {
-		if (recognizeOperand(token)!=-1) {
-			printf("%d: srcAddr: %d\n",count,recognizeOperand(token));
-			validOperOpcode(opcode,srcAddr,-1);
-			return 1;
+		destAddr = recognizeOperand(token);
+		if (destAddr!=-1) {
+			printf("%d: destAddr: %d\n",count,destAddr);
+			if (validOperOpcode(opcode,-1,destAddr)) {
+				return 1;
+			} else {
+				printf("Invalid operands received for this command.\n");
+				return 0;
+			}
 		}
 		return 0;
 	} else if (noOperands) {
@@ -444,16 +454,91 @@ int recognizeOperand(char *str) {
 				return 1;
 			str=str+1;
 		}
+		printf("Invalid operand data entered.\n");
 		return invalidResult;
 	}
 }
 int validOperOpcode(int opcode, int srcAddr, int destAddr) {
-	if (srcAddr!=-1 && destAddr!=-1) {
-		/*comparison with opcode*/
-	} else if (srcAddr!=-1 && destAddr==-1) {
-		/*Single operand validation with opcode*/
+	int i=0, j=0, x=0, numSrc=0, numDest=0, foundSrc=0, foundDest=0;
+	int addressingTableLen = sizeof(addressingTable)/sizeof(addressingTable[0]);
+	char addressingSrc[6] = { 0 };
+	char addressingDest[6] = { 0 };
+	int digit;
+	int tmp=0;
+
+	addressingSrc[i++]=1, addressingDest[j++]=1;
+
+	if (opcode>9) {
+		for (x=0; x<2; x++) {
+			digit = opcode % 10;
+			opcode /=10;
+			addressingSrc[i++] = digit;
+			addressingDest[j++] = digit;
+		}
+		reverseDigits();
+	} else {
+		addressingSrc[i++] = opcode;
+		addressingDest[j++] = opcode;
 	}
-	return 1;
+
+	addressingSrc[i++]=0, addressingDest[j++]=1;
+
+	if (srcAddr!=-1 && destAddr!=-1) {
+		if (srcAddr>9) {
+			for (x=0; x<2; x++) {
+				digit = srcAddr % 10;
+				srcAddr /=10;
+				addressingSrc[i++] = digit;
+			}
+			reverseDigits();
+		} else {
+			addressingSrc[i++] = srcAddr;
+		}
+		if (destAddr>9) {
+			for (x=0; x<2; x++) {
+				digit = destAddr % 10;
+				destAddr /=10;
+				addressingDest[j++] = digit;
+			}
+			reverseDigits();
+		} else {
+			addressingDest[j++] = destAddr;
+		}
+
+		for (x = 0; x < i; x++)
+			numSrc = 10 * numSrc + addressingSrc[x];
+		for (x = 0; x < j; x++)
+			numDest = 10 * numDest + addressingDest[x];
+
+		for (i=0; i<=addressingTableLen; i++) {
+			if (addressingTable[i]==numSrc)
+				foundSrc=1;
+			if (addressingTable[i]==numDest)
+				foundDest=1;
+			if (foundSrc && foundDest)
+				return 1;
+		}
+	} else if (srcAddr==-1 && destAddr!=-1) {
+		if (destAddr>9) {
+			for (x=0; x<2; x++) {
+				digit = destAddr % 10;
+				destAddr /=10;
+				addressingDest[j++] = digit;
+			}
+			reverseDigits();
+		} else {
+			addressingDest[j++] = destAddr;
+		}
+		for (x = 0; x < j; x++)
+			numDest = 10 * numDest + addressingDest[x];
+		for (i=0; i<=addressingTableLen; i++) {
+			if (addressingTable[i]==numDest)
+				foundDest=1;
+			if (foundDest)
+				return 1;
+		}
+	}
+	return 0;
 }
 char *getNextString(char* str) {
 	char *dotPos = strchr(str, spaceChar);
