@@ -51,7 +51,7 @@
 #define extractSymData(X) \
 		extractData(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar)+sizeof(dotChar)+strlen(dotCommand)+sizeof(spaceChar)),X);\
 		if (extractResult) {\
-			printf("%d: %s ("X" found)\n",*count,line);\
+			printf("%d: %s ("X" found)\n",count+1,line);\
 		if (symbolCounter == 0)\
 			symbolList = createSymbolNode(symbolPointer,tmp,0,0);\
 		else\
@@ -100,8 +100,9 @@ typedef struct dataTables {
 	struct dataTables* next;
 } myDataTable;
 
+int symIsUpper(char* str);
+void first_parsing_line (char *line, int count);
 void init_command_table();
-void first_parsing_line (char *line, int *count);
 void strip_extra_spaces (char* str);
 int hasSymbol(char* str);
 char *hasDot(char* str);
