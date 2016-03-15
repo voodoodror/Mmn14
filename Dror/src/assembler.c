@@ -41,7 +41,7 @@ int main(int argc, char **argv)
 
         if (fp == NULL)
         {
-            printf("Error: can't find file %s\n", file_name);
+            printf("ERROR: Cannot find file %s\n", file_name);
             return -1;
         }
 
@@ -49,11 +49,13 @@ int main(int argc, char **argv)
 
         while (fgets(lineToProcess, MAX_LINE, fp))
         {
-        	first_parsing_line(lineToProcess, &count);
+        	first_parsing_line(lineToProcess, count+1);
         	count++;
         }
         fclose(fp);
-
+        printf("\n\n*DEBUG*\n");
+        printf("Total Errors in program: %d\n",errorFlag);
+        printf("IC: %d\tDC: %d\n\n",ic,dc);
         printf("\n\nSymbol Table:\n");
 		mySymbolList* iter;
 		for (iter = symbolList; NULL != iter; iter = iter->next)
@@ -97,8 +99,8 @@ void init_command_table()
 	commandTable[14].command = "rts",commandTable[14].srcOperations=0,commandTable[14].destOperations=0;
 	commandTable[15].command = "stop",commandTable[15].srcOperations=0,commandTable[15].destOperations=0;
 }
-void first_parsing_line (char *line, int *count) {
-	int dupSymbol=0, symbolFound=0, commandFound=0, tmp=0;
+void first_parsing_line (char *line, int count) {
+	int dupSymbol=0, commandFound=0, tmp=0;
 
 	char *symbolPointer;
 	char *dotCommand;
@@ -106,23 +108,25 @@ void first_parsing_line (char *line, int *count) {
 
 	strip_extra_spaces(line);
 	if (line[0] == ';') {
-		printf("%d: %s (comment line, ignoring)\n",*count,line);
 	} else if (strlen(line) == 0){
-		printf("%d: Empty line found, ignoring\n",*count);
 	} else {
 		if (!isalpha(line[0]) && line[0] != '.') {
-			printf("%d: (line MUST begin with a letter OR a DOT!)\n",*count);
+			printf("ERROR: Line %d - line MUST begin with a letter or a dot.\n",count+1);
+			errorFlag+=1;
 		} else {
 			if (hasSymbol(line) != 0) {
 				if (hasSymbol(line+(symbolLen+sizeof(symbolChar))) != 0) {
-					printf("%d: %s (Syntax Error! multiple symbol signs found!)\n",*count,line);
+					printf("ERROR: Line %d - More than 1 symbol sign has been found.\n",count+1);
+					errorFlag+=1;
+				} else if (!symIsUpper(getSymbol(line,hasSymbol(line)))) {
+					printf("ERROR: Line %d - Symbol has other chars than uppercase.\n",count+1);
+					errorFlag+=1;
 				} else {
 					if (symbolCounter!=0) {
 						symbolPointer = getSymbol(line,hasSymbol(line));
 						dupSymbol = findDuplicateSym(symbolList,symbolPointer);
 					}
 					if (!dupSymbol) {
-						symbolFound=1;
 						if (hasDot(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar))) != NULL) {
 							symbolPointer = getSymbol(line,hasSymbol(line));
 							dotCommand = getNextString(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar)+sizeof(dotChar)));
@@ -133,10 +137,10 @@ void first_parsing_line (char *line, int *count) {
 								tmp = dc;
 								extractResult = extractSymData("data");
 							} else {
-								printf("%d: %s (unknown instruction line, ignoring)\n",*count,line);
+								printf("ERROR: Line %d - Instruction line doesn't exist. Make you write everything in lowercase.\n",count+1);
+								errorFlag+=1;
 							}
 						} else {
-							printf("%d: %s (NEW symbol found)\n",*count,line);
 							symbolPointer = getSymbol(line,hasSymbol(line));
 							if (symbolCounter == 0)
 								symbolList = createSymbolNode(symbolPointer,100,0,0);
@@ -148,18 +152,21 @@ void first_parsing_line (char *line, int *count) {
 							if (commandFound!=-1) {
 								extractResult = extractSym(commandFound);
 								if (extractResult)
-									printf("%d: %s (\"%s\")\n",*count,line,dotCommand);
+									ic+=extractResult;
+									printf("%d: %s (\"%s\")\n",count+1,line,dotCommand);
 							} else {
-								printf("%d: %s (command not found)\n",*count,line);
+								printf("ERROR: Line %d - Command not found.\n",count+1);
 							}
 						}
+					} else {
+						printf("ERROR: Line %d - Duplicate Symbol Detected.\n",count+1);
+						errorFlag+=1;
 					}
 				}
 			} else if (line[0] == '.'){
-				symbolFound=0;
 				dotCommand = getNextString(line+sizeof(dotChar));
 				if (strcmp(dotCommand,"entry") == 0) {
-					printf("%d: %s (entry found)\n",*count,line);
+					printf("%d: %s (entry found)\n",count+1,line);
 				} else if (strcmp(dotCommand,"extern") == 0) {
 					symbolPointer = getNextString(line+(sizeof(spaceChar)+strlen(dotCommand)+sizeof(spaceChar)));
 					if (symbolCounter == 0)
@@ -167,20 +174,22 @@ void first_parsing_line (char *line, int *count) {
 					else
 						symbolList = addSymbolNode(symbolList,symbolPointer,0,1,0);
 					symbolCounter++;
-					printf("%d: %s (extern found)\n",*count,line);
+					printf("%d: %s (extern found)\n",count+1,line);
 				} else {
-					printf("%d: %s (unknown instruction line, ignoring)\n",*count,line);
+					printf("ERROR: Line %d - Instruction line doesn't exist.\n",count+1);
+					errorFlag+=1;
 				}
 			} else {
-				symbolFound=0;
 				dotCommand = getNextString(line);
 				commandFound = findCommand(dotCommand);
 				if (commandFound!=-1) {
 					extractResult = extractOperands(line+(sizeof(spaceChar)+strlen((char *)dotCommand)),commandFound);
 					if (extractResult)
-						printf("%d: %s command found: (\"%s\")\n",*count,line,dotCommand);
+						printf("%d: %s command found: (\"%s\")\n",count+1,line,dotCommand);
+						ic+=extractResult;
 				} else {
-					printf("%d: %s (command not found)\n",*count,line);
+					printf("ERROR: Line %d - Operand doesn't exist.\n",count+1);
+					errorFlag+=1;
 				}
 			}
 		}
@@ -190,7 +199,6 @@ int findDuplicateSym(mySymbolList *symbolList,char *sym) {
 	mySymbolList* iter;
 	for (iter = symbolList; NULL != iter; iter = iter->next) {
 		if(strcmp(iter->Sym,sym) == 0) {
-			printf("Duplicate symbol found!\n");
 			return 1;
 		}
 	}
@@ -261,19 +269,22 @@ int extractData(char *str, char *type) {
 
 	rwPointer = rwString;
 	if (str == NULL) {
-		printf("No data found in string");
+		printf("ERROR: Line %d - No data has been found in string.\n",count+1);
+		errorFlag+=1;
 		return 0;
 	}
 	if (strcmp(type,"data") == 0) {
 
 		token = strsep(&rwPointer,",");
 		if (token == NULL) {
-			printf("%d: Error occurred while trying to parse data field.\n1. Please make sure you don\'t have comma at the beginning or end of the string.\n2. Don't put 2 commas side by side.",count);
+			printf("ERROR: Line %d - Error occurred while trying to parse data field.\n1. Please make sure you don\'t have comma at the beginning or end of the string.\n2. Don't put 2 commas side by side.\n",count+1);
+			errorFlag+=1;
 			return 0;
 		}
 		while (token != NULL) {
 			if ((strlen(token)<=1) && (!isdigit(token[0]))) {
-				printf("%d: Syntax Error: Empty or invalid char found.\n",count);
+				printf("ERROR: Line %d - Empty or invalid char found.\n",count+1);
+				errorFlag+=1;
 				return 0;
 			}
 			token = strsep(&rwPointer,",");
@@ -288,7 +299,6 @@ int extractData(char *str, char *type) {
 			} else {
 				dataTable = addDataNode(dataTable,dc++,(int)*token);
 			}
-			/*printf("TOKEN: %s\n", token);*/
 
 			token = strsep(&rwPointer,",");
 		}
@@ -304,7 +314,7 @@ int extractData(char *str, char *type) {
 			if (qmFound==2) {
 				str = str+1;
 
-				str[strlen(str)] = '\0';
+				str[strlen(str)-1] = '\0';
 
 				while (str[0]!='\0') {
 					if (dc == 0) {
@@ -315,12 +325,15 @@ int extractData(char *str, char *type) {
 						str++;
 					}
 				}
+				dataTable = addDataNode(dataTable,dc++,0);
 				return 1;
 			} else if (qmFound<=2) {
-				printf("%d: Syntax Error: No quotation marks found for string!\n",count);
+				printf("ERROR: Line %d - No quotation marks found for string!\n",count+1);
+				errorFlag+=1;
 				return 0;
 			} else if (qmFound>2) {
-				printf("%d: Syntax Error: Too much quotation marks has been found!\n",count);
+				printf("ERROR: Line %d - More than 1 quotation mark has been found!\n",count+1);
+				errorFlag+=1;
 				return 0;
 			}
 		}
@@ -331,13 +344,14 @@ int extractOperands(char *str, int opcode) {
 	char *rwPointer;
 	strcpy(rwString,str);
 	char *token;
-	int i=0,singleOperand=0,noOperands=0,srcAddr=-1,destAddr=-1;
+	int i=0,singleOperand=0,noOperands=0,srcAddr=-1,destAddr=-1,validateSuccess=0;
 	rwPointer = rwString;
 
 	token = strchr(str,commaChar);
 	if (opcode==14 || opcode==15) {
 		if (token!=NULL) {
-			printf("Syntax Error! You can't use operands in this command!\n");
+			printf("ERROR: Line %d - You can't use operands with this command!\n",count+1);
+			errorFlag+=1;
 			return 0;
 		}
 		noOperands=1;
@@ -346,7 +360,8 @@ int extractOperands(char *str, int opcode) {
 		if (str != NULL && commandTable[opcode].srcOperations==0 && commandTable[opcode].destOperations==1) {
 			singleOperand=1;
 		} else {
-			printf("%d: Invalid operand for %s\n",count,commandTable[opcode].command);
+			printf("ERROR: Line %d - Invalid addressing for this operand.\n",count+1);
+			errorFlag+=1;
 			return 0;
 		}
 	}
@@ -355,7 +370,8 @@ int extractOperands(char *str, int opcode) {
 
 	while (token != NULL && !singleOperand && !noOperands) {
 		if (strcmp(token,"\0")==0) {
-			printf("%d: Syntax Error: Empty or invalid operand found.\n",count);
+			printf("ERROR: Line %d - Empty or invalid operand has been found.\n",count+1);
+			errorFlag+=1;
 			return 0;
 		}
 		token = strsep(&rwPointer,",");
@@ -372,12 +388,13 @@ int extractOperands(char *str, int opcode) {
 		destAddr = recognizeOperand(token);
 
 		if (srcAddr!=-1 && destAddr!=-1) {
-			if(validOperOpcode(opcode,srcAddr,destAddr)) {
-				printf("GOOD TO GO!\n");
-				return 1;
+			validateSuccess=validOperOpcode(opcode,srcAddr,destAddr);
+			if(validateSuccess!=0) {
+				return validateSuccess;
 			} else {
-				printf("Invalid operands received for this command.\n");
-				return 0;
+				printf("ERROR: Line %d - Invalid operands received for this command.\n",count+1);
+				errorFlag+=1;
+				return validateSuccess;
 			}
 		}
 
@@ -387,20 +404,21 @@ int extractOperands(char *str, int opcode) {
 	} else if (singleOperand) {
 		destAddr = recognizeOperand(token);
 		if (destAddr!=-1) {
-			printf("%d: destAddr: %d\n",count,destAddr);
-			if (validOperOpcode(opcode,-1,destAddr)) {
-				return 1;
+			validateSuccess=validOperOpcode(opcode,-1,destAddr);
+			if (validateSuccess!=0) {
+				return validateSuccess;
 			} else {
-				printf("Invalid operands received for this command.\n");
+				printf("ERROR: Line %d - Invalid operands received for this command.\n",count+1);
+				errorFlag+=1;
 				return 0;
 			}
 		}
 		return 0;
 	} else if (noOperands) {
-		printf("%d: STOP or RTS command found!\n",count);
 		return 1;
 	} else {
-		printf("SYNTAX ERROR:\n1. Do not place 2 commas side by side\n2. Please make sure you do not exceed 2 operands limit.\n\n");
+		printf("ERROR: Line %d - Do not place 2 commas side by side\n2. Please make sure you do not exceed 2 operands limit.\n",count+1);
+		errorFlag+=1;
 		return 0;
 	}
 }
@@ -415,11 +433,13 @@ int recognizeOperand(char *str) {
 			if (tempNum>=0 && tempNum<=7) {
 				return 3;
 			} else {
-				printf("Invalid register number.\n");
+				printf("ERROR: Line %d - Invalid register number in addressing.\n",count+1);
+				errorFlag+=1;
 				return invalidResult;
 			}
 		} else {
-			printf("Too LESS or MUCH chars for register operand.\n");
+			printf("ERROR: Line %d - Too LESS or MUCH chars for register operand.\n",count+1);
+			errorFlag+=1;
 			return invalidResult;
 		}
 	} else if (str[0] == '#') {
@@ -429,7 +449,8 @@ int recognizeOperand(char *str) {
 			if (tempNum<=16385 && tempNum>0) {
 				return 0;
 			} else {
-				printf("Invalid number entered.\n");
+				printf("ERROR: Line %d - Invalid number entered.\n",count+1);
+				errorFlag+=1;
 				return invalidResult;
 			}
 		} else {
@@ -438,7 +459,8 @@ int recognizeOperand(char *str) {
 			if (tempNum<=16383 && tempNum>0) {
 				return 0;
 			} else {
-				printf("Invalid number entered.\n");
+				printf("ERROR: Line %d - Invalid number entered.\n",count+1);
+				errorFlag+=1;
 				return invalidResult;
 			}
 		}
@@ -449,12 +471,13 @@ int recognizeOperand(char *str) {
 	} else if (strcmp(str,"***")==0) {
 		return 23;
 	} else {
-		while (str!=NULL) {
+		while (strlen(str)!=0) {
 			if (str[0]>=65 && str[0]<=90)
 				return 1;
 			str=str+1;
 		}
-		printf("Invalid operand data entered.\n");
+		printf("ERROR: Line %d - Invalid data operand entered.\n",count+1);
+		errorFlag+=1;
 		return invalidResult;
 	}
 }
@@ -515,8 +538,12 @@ int validOperOpcode(int opcode, int srcAddr, int destAddr) {
 				foundSrc=1;
 			if (addressingTable[i]==numDest)
 				foundDest=1;
-			if (foundSrc && foundDest)
-				return 1;
+			if (foundSrc && foundDest) {
+				if (srcAddr==3 && destAddr==3) {
+					return 2;
+				}
+				return 3;
+			}
 		}
 	} else if (srcAddr==-1 && destAddr!=-1) {
 		if (destAddr>9) {
@@ -535,7 +562,7 @@ int validOperOpcode(int opcode, int srcAddr, int destAddr) {
 			if (addressingTable[i]==numDest)
 				foundDest=1;
 			if (foundDest)
-				return 1;
+				return 2;
 		}
 	}
 	return 0;
@@ -561,6 +588,16 @@ char *getSymbol(char* str, int pos) {
 	memcpy(myStr,str,pos);
 	myStr[pos] = '\0';
 	return myStr;
+}
+int symIsUpper(char* str) {
+	char *myStr = malloc(sizeof(char*));
+	memcpy(myStr,str,strlen(str));
+	while (myStr[0] != '\0') {
+		if (myStr[0]<65 || myStr[0]>90)
+			return 0;
+		myStr=myStr+1;
+	}
+	return 1;
 }
 mySymbolList *createSymbolNode (char* str, unsigned int dc, int external, int action) {
 	mySymbolList* newSymbol = malloc(sizeof(mySymbolList));
