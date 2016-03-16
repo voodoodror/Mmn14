@@ -29,7 +29,7 @@
 #define TYPE_OFFSET 16
 #define RSVD_OFFSET 17
 
-#define MAX_DIGIT 8
+#define MAX_DIGIT 15
 
 #define MOV 0
 #define CMP 1
@@ -96,7 +96,8 @@ typedef struct commandTables {
 
 typedef struct dataTables {
 	int dc;
-	unsigned int data;
+	int data;
+	char *binaryData;
 	struct dataTables* next;
 } myDataTable;
 
@@ -118,19 +119,23 @@ int validOperOpcode(int opcode, int srcAddr, int destAddr);
 
 mySymbolList *createSymbolNode (char* str, unsigned int dc, int external, int action);
 mySymbolList *addSymbolNode (mySymbolList* symbolList, char* str, unsigned int dc, int external, int action);
-myDataTable *createDataNode (int dc, unsigned int data);
-myDataTable *addDataNode (myDataTable* dataTable, int dc, unsigned int data);
+myDataTable *createDataNode (int dc, int data);
+myDataTable *addDataNode (myDataTable* dataTable, int dc, int data);
 
 char *to_base(int num, int base, char *result, int pad)
 {
-	int index = 0, i;
+	int negativeNumber=0,oneFound=0;
+	int index = 0, i,j;
 	char tmp[MAX_DIGIT + 1];
 	for (i = 0; i < MAX_DIGIT; i++) /* reset all the cells */
 	{
 		result[i] = '0';
 		tmp[i] = '0';
 	}
-
+	if (num<0) {
+		num = abs(num);
+		negativeNumber=1;
+	}
 	while (num != 0)
 	{
 		tmp[index] = (num % base) + '0';
@@ -143,6 +148,26 @@ char *to_base(int num, int base, char *result, int pad)
 		result[i] = tmp[MAX_DIGIT - 1 - i];
 	}
     result[i] = '\0';
+
+    if(negativeNumber) {
+    	i=0;
+    	while (!oneFound) {
+    		if (result[MAX_DIGIT-i]=='1') {
+    			i=MAX_DIGIT-i;
+    			oneFound=1;
+    		} else {
+    			i++;
+    		}
+
+		}
+    	for (j = 0; j < i; j++)
+		{
+				if (result[j]=='1')
+					result[j]='0';
+				else if (result[j]=='0')
+					result[j]='1';
+		}
+    }
 
     if (pad)
     {
