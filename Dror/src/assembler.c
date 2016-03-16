@@ -15,7 +15,7 @@ int symbolLen = 0;
 int dotLen = 0;
 int symbolCounter = 0;
 int errorFlag = 0;
-int dc=0, ic=0;
+int dc=0, ic=100;
 int count;
 mySymbolList *symbolList;
 myHashTable *hashTable[MAX_ARRAY_SIZE];
@@ -52,6 +52,11 @@ int main(int argc, char **argv)
         	first_parsing_line(lineToProcess, count+1);
         	count++;
         }
+        /*while (fgets(lineToProcess, MAX_LINE, fp))
+		{
+			second_parsing_line(lineToProcess, count+1);
+			count++;
+		}*/
         fclose(fp);
         printf("\n\n*DEBUG*\n");
         printf("Total Errors in program: %d\n",errorFlag);
@@ -64,7 +69,7 @@ int main(int argc, char **argv)
 		printf("\n\nData Table:\n");
 		myDataTable* iterd;
 		for (iterd = dataTable; NULL != iterd; iterd = iterd->next)
-			printf("DC: \"%d\"\tDATA: \"%u\"\n",iterd->dc,iterd->data);
+			printf("DC: \"%d\"\tDATA: \"%d\"\tBINARY DATA: \"%s\"\n",iterd->dc,iterd->data,iterd->binaryData);
     }
     return 0;
 }
@@ -100,16 +105,14 @@ void init_command_table()
 	commandTable[15].command = "stop",commandTable[15].srcOperations=0,commandTable[15].destOperations=0;
 }
 void first_parsing_line (char *line, int count) {
-	int dupSymbol=0, commandFound=0, tmp=0;
+	int dupSymbol=0, commandFound=-1, tmp=0;
 
 	char *symbolPointer;
 	char *dotCommand;
-	char extractResult;
+	int extractResult;
 
 	strip_extra_spaces(line);
-	if (line[0] == ';') {
-	} else if (strlen(line) == 0){
-	} else {
+	if (line[0] != ';' && strlen(line) != 0) {
 		if (!isalpha(line[0]) && line[0] != '.') {
 			printf("ERROR: Line %d - line MUST begin with a letter or a dot.\n",count+1);
 			errorFlag+=1;
@@ -141,21 +144,23 @@ void first_parsing_line (char *line, int count) {
 								errorFlag+=1;
 							}
 						} else {
-							symbolPointer = getSymbol(line,hasSymbol(line));
-							if (symbolCounter == 0)
-								symbolList = createSymbolNode(symbolPointer,100,0,0);
-							else
-								symbolList = addSymbolNode(symbolList,symbolPointer,100,0,0);
-							symbolCounter++;
 							dotCommand = getNextString(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar)));
 							commandFound = findCommand(dotCommand);
 							if (commandFound!=-1) {
 								extractResult = extractSym(commandFound);
-								if (extractResult)
+								if (extractResult) {
 									ic+=extractResult;
+									symbolPointer = getSymbol(line,hasSymbol(line));
+									if (symbolCounter == 0)
+										symbolList = createSymbolNode(symbolPointer,ic-extractResult,0,1);
+									else
+										symbolList = addSymbolNode(symbolList,symbolPointer,ic-extractResult,0,1);
+									symbolCounter++;
 									printf("%d: %s (\"%s\")\n",count+1,line,dotCommand);
+								}
 							} else {
 								printf("ERROR: Line %d - Command not found.\n",count+1);
+								errorFlag+=1;
 							}
 						}
 					} else {
@@ -166,7 +171,7 @@ void first_parsing_line (char *line, int count) {
 			} else if (line[0] == '.'){
 				dotCommand = getNextString(line+sizeof(dotChar));
 				if (strcmp(dotCommand,"entry") == 0) {
-					printf("%d: %s (entry found)\n",count+1,line);
+					printf("%d: %s (entry found, ignoring in first parsing)\n",count+1,line);
 				} else if (strcmp(dotCommand,"extern") == 0) {
 					symbolPointer = getNextString(line+(sizeof(spaceChar)+strlen(dotCommand)+sizeof(spaceChar)));
 					if (symbolCounter == 0)
@@ -193,6 +198,46 @@ void first_parsing_line (char *line, int count) {
 				}
 			}
 		}
+	}
+}
+void second_parsing_line (char *line, int count) {
+
+	char *symbolPointer;
+	char *dotCommand;
+
+	strip_extra_spaces(line);
+	if (line[0] != ';' && strlen(line) != 0) {
+			if (hasSymbol(line) != 0) {
+						if (hasDot(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar))) != NULL) {
+							symbolPointer = getSymbol(line,hasSymbol(line));
+							dotCommand = getNextString(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar)+sizeof(dotChar)));
+							if (strcmp(dotCommand,"string") == 0) {
+							} else if (strcmp(dotCommand,"data") == 0) {
+							}
+						} else {
+							dotCommand = getNextString(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar)));
+							findCommand(dotCommand);
+						}
+			} else if (line[0] == '.'){
+				dotCommand = getNextString(line+sizeof(dotChar));
+				if (strcmp(dotCommand,"entry") == 0) {
+					printf("%d: %s (entry found, ignoring in first parsing)\n",count+1,line);
+				} else if (strcmp(dotCommand,"extern") == 0) {
+					symbolPointer = getNextString(line+(sizeof(spaceChar)+strlen(dotCommand)+sizeof(spaceChar)));
+					if (symbolCounter == 0)
+						symbolList = createSymbolNode(symbolPointer,0,1,0);
+					else
+						symbolList = addSymbolNode(symbolList,symbolPointer,0,1,0);
+					symbolCounter++;
+					printf("%d: %s (extern found)\n",count+1,line);
+				} else {
+					printf("ERROR: Line %d - Instruction line doesn't exist.\n",count+1);
+					errorFlag+=1;
+				}
+			} else {
+				dotCommand = getNextString(line);
+				findCommand(dotCommand);
+			}
 	}
 }
 int findDuplicateSym(mySymbolList *symbolList,char *sym) {
@@ -266,6 +311,7 @@ int extractData(char *str, char *type) {
 	char *rwPointer;
 	strcpy(rwString,str);
 	char *token;
+	int num;
 
 	rwPointer = rwString;
 	if (str == NULL) {
@@ -294,10 +340,11 @@ int extractData(char *str, char *type) {
 		token = strsep(&rwPointer,",");
 
 		while (token != NULL) {
+			num = atoi(token);
 			if (dc == 0) {
-				dataTable = createDataNode(dc++,(int)*token);
+				dataTable = createDataNode(dc++,num);
 			} else {
-				dataTable = addDataNode(dataTable,dc++,(int)*token);
+				dataTable = addDataNode(dataTable,dc++,num);
 			}
 
 			token = strsep(&rwPointer,",");
@@ -446,7 +493,7 @@ int recognizeOperand(char *str) {
 		if (str[1] == '-') {
 			str = str+2;
 			tempNum = atoi(str);
-			if (tempNum<=16385 && tempNum>0) {
+			if (tempNum<=16384 && tempNum>0) {
 				return 0;
 			} else {
 				printf("ERROR: Line %d - Invalid number entered.\n",count+1);
@@ -624,17 +671,18 @@ mySymbolList *addSymbolNode (mySymbolList* symbolList, char* str, unsigned int d
 	}
 	return firstpos;
 }
-myDataTable *createDataNode (int dc, unsigned int data) {
+myDataTable *createDataNode (int dc, int data) {
 	myDataTable* newData = malloc(sizeof(myDataTable));
-
+	char *temp = malloc(sizeof(char*));
 	if (NULL != newData){
 		newData->dc = dc;
 		newData->data = data;
+		newData->binaryData = to_base(data,2,temp,1);
 		newData->next = NULL;
 	}
 	return newData;
 }
-myDataTable *addDataNode (myDataTable* dataTable, int dc, unsigned int data) {
+myDataTable *addDataNode (myDataTable* dataTable, int dc, int data) {
 	myDataTable* newData = createDataNode(dc,data);
 	myDataTable *firstpos = dataTable;
 	if (newData != NULL) {
