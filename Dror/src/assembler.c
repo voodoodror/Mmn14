@@ -5,20 +5,20 @@
 #include "assembler.h"
 
 char *lineToProcess;
+char file_name[20];
 const char symbolChar = ':';
 const char dotChar = '.';
 const char spaceChar = ' ';
 const char qmChar = '\"';
 const char newlineChar = '\n';
 const char commaChar = 44; /* , char */
-int symbolLen = 0;
-int dotLen = 0;
-int symbolCounter = 0;
-int errorFlag = 0;
-int dc=0, ic=100;
+int symbolLen;
+int dotLen;
+int symbolCounter;
+int errorFlag;
+int dc, ic;
 int count;
 mySymbolList *symbolList;
-myHashTable *hashTable[MAX_ARRAY_SIZE];
 myCommandTable commandTable[COMMAND_SIZE];
 myDataTable *dataTable;
 int addressingTable[82] = { 1000, 1001, 10021, 10022, 10023, 1003, 1011, 10121, 10122, 10123, 10123, 1013, 1100, 1101, 11011, 110121, 110122, 110123, 11013, 11021, 11022, 11023, 1103, 1110, 1111, 11111, 111121, 111122, 111123, 11113, 11121, 11122, 11123, 1113, 11210, 11211, 112121, 112122, 112123, 11213, 11311, 113123, 1200, 1201, 12021, 12022, 12023, 1203, 1211, 12121, 12122, 12123, 12123, 1213, 1300, 1301, 13021, 13022, 13023, 1303, 1311, 13121, 13122, 13123, 1313, 1411, 1413, 1511, 1513, 1601, 16023, 1611, 1613, 1711, 1713, 1811, 1813, 1911, 19121, 19122, 19123, 1913 };
@@ -26,16 +26,44 @@ int addressingTable[82] = { 1000, 1001, 10021, 10022, 10023, 1003, 1011, 10121, 
 int main(int argc, char **argv)
 {
 
-    int i;
+		long int decimalNumber,remainder,quotient;
+		int i=1,j,temp;
 
+		char hexadecimalNumber[100];
+		printf("Enter any decimal number: ");
+		scanf("%ld",&decimalNumber);
+		quotient = decimalNumber;
+		while(quotient!=0) {
+			temp = quotient % 32;
+			//To convert integer into character
+			if( temp < 10)
+					   temp =temp + 48; else
+					 temp = temp + 55;
+			hexadecimalNumber[i++]= temp;
+			quotient = quotient / 32;
+		}
+		printf("Equivalent hexadecimal value of decimal number %d: ",decimalNumber);
+		for (j = i -1 ;j> 0;j--)
+			  printf("%c",hexadecimalNumber[j]);
+		return 0;
+
+
+	/*int i=0*/
     FILE *fp;
-    char file_name[20];
+
     char *lineToProcess = malloc(sizeof(char) * BUF_SIZE);
 
     init_command_table();
 
     for (i = 1; i < argc; i++)
     {
+    	count=0;
+    	symbolLen = 0;
+    	dotLen = 0;
+    	symbolCounter = 0;
+    	errorFlag = 0;
+    	dc=0, ic=100;
+
         sprintf(file_name, "%s", argv[i]);
         fp = fopen(file_name, "r");
 
@@ -52,11 +80,20 @@ int main(int argc, char **argv)
         	first_parsing_line(lineToProcess, count+1);
         	count++;
         }
-        /*while (fgets(lineToProcess, MAX_LINE, fp))
-		{
-			second_parsing_line(lineToProcess, count+1);
-			count++;
-		}*/
+
+        count=0;
+        rewind(fp);
+        replaceStrAddr();
+
+        if (!errorFlag) {
+        	while (fgets(lineToProcess, MAX_LINE, fp))
+			{
+				second_parsing_line(lineToProcess, count+1);
+				count++;
+			}
+        } else {
+        	printf("Please fix the errors and try again.\n");
+        }
         fclose(fp);
         printf("\n\n*DEBUG*\n");
         printf("Total Errors in program: %d\n",errorFlag);
@@ -70,6 +107,7 @@ int main(int argc, char **argv)
 		myDataTable* iterd;
 		for (iterd = dataTable; NULL != iterd; iterd = iterd->next)
 			printf("DC: \"%d\"\tDATA: \"%d\"\tBINARY DATA: \"%s\"\n",iterd->dc,iterd->data,iterd->binaryData);
+		printf("\n\n\n");
     }
     return 0;
 }
@@ -202,10 +240,24 @@ void first_parsing_line (char *line, int count) {
 }
 void second_parsing_line (char *line, int count) {
 
+
+	/* pointers for the files
+    FILE *obj, *ext, *ent;
+    sprintf(file_name, "%s.obj", module_name);
+    obj = fopen(file_name, "w");
+    sprintf(file_name, "%s.ext", module_name);
+    ext = fopen(file_name, "w");
+    sprintf(file_name, "%s.ent", module_name);
+    ent = fopen(file_name, "w");
+	 print header */
+
 	char *symbolPointer;
 	char *dotCommand;
+	char *temp = malloc(sizeof(char*));;
+	myHashTable hashTable[ic];
 
 	strip_extra_spaces(line);
+	hashTable[0].dest_addr=to_base(3,2,temp,0);
 	if (line[0] != ';' && strlen(line) != 0) {
 			if (hasSymbol(line) != 0) {
 						if (hasDot(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar))) != NULL) {
@@ -221,7 +273,7 @@ void second_parsing_line (char *line, int count) {
 			} else if (line[0] == '.'){
 				dotCommand = getNextString(line+sizeof(dotChar));
 				if (strcmp(dotCommand,"entry") == 0) {
-					printf("%d: %s (entry found, ignoring in first parsing)\n",count+1,line);
+
 				} else if (strcmp(dotCommand,"extern") == 0) {
 					symbolPointer = getNextString(line+(sizeof(spaceChar)+strlen(dotCommand)+sizeof(spaceChar)));
 					if (symbolCounter == 0)
@@ -238,6 +290,47 @@ void second_parsing_line (char *line, int count) {
 				dotCommand = getNextString(line);
 				findCommand(dotCommand);
 			}
+	}
+
+	/* close all the open files
+    fclose(obj);
+    fclose(ext);
+    fclose(ent);
+
+	for (i = 0; i < HASHSIZE; i++)
+	{
+		data_symtab[i] = NULL;
+		inst_symtab[i] = NULL;
+		exttab[i] = NULL;
+	}
+    if (errorFlag == 1)
+    {
+    	printf("Output files were not created due to found errors at the input file\n\n");
+        sprintf(file_name, "%s.obj", module_name);
+        remove(file_name);
+        sprintf(file_name, "%s.ext", module_name);
+        remove(file_name);
+        sprintf(file_name, "%s.ent", module_name);
+        remove(file_name);
+    }
+    else if (extern_counter == 0)
+    {
+        sprintf(file_name, "%s.ext", module_name);
+        remove(file_name);
+    }
+    else if (entry_counter == 0)
+    {
+        sprintf(file_name, "%s.ent", module_name);
+        remove(file_name);
+    }
+    return 0;*/
+}
+void replaceStrAddr() {
+	mySymbolList* iter;
+	for (iter = symbolList; NULL != iter; iter = iter->next) {
+		if(iter->ext==0 && iter->action==0) {
+			iter->addr+=ic;
+		}
 	}
 }
 int findDuplicateSym(mySymbolList *symbolList,char *sym) {
