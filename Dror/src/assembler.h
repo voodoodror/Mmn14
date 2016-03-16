@@ -75,6 +75,7 @@ typedef struct symbolLists {
 } mySymbolList;
 
 typedef struct hashTables {
+	int addr;
     unsigned int era        : ERA_WIDTH;
     unsigned int dest_reg   : DREG_WIDTH;
     unsigned int dest_addr  : DADDR_WIDTH;
@@ -100,9 +101,10 @@ typedef struct dataTables {
 	char *binaryData;
 	struct dataTables* next;
 } myDataTable;
-
+mySymbolList *symbolList;
 int symIsUpper(char* str);
 void first_parsing_line (char *line, int count);
+void second_parsing_line (char *line, int count);
 void init_command_table();
 void strip_extra_spaces (char* str);
 int hasSymbol(char* str);
@@ -116,7 +118,7 @@ int findCommand(char *command);
 int findDuplicateSym(mySymbolList *symbolList,char *sym);
 int recognizeOperand(char *str);
 int validOperOpcode(int opcode, int srcAddr, int destAddr);
-
+void replaceStrAddr();
 mySymbolList *createSymbolNode (char* str, unsigned int dc, int external, int action);
 mySymbolList *addSymbolNode (mySymbolList* symbolList, char* str, unsigned int dc, int external, int action);
 myDataTable *createDataNode (int dc, int data);
@@ -158,14 +160,13 @@ char *to_base(int num, int base, char *result, int pad)
     		} else {
     			i++;
     		}
-
 		}
     	for (j = 0; j < i; j++)
 		{
-				if (result[j]=='1')
-					result[j]='0';
-				else if (result[j]=='0')
-					result[j]='1';
+			if (result[j]=='1')
+				result[j]='0';
+			else if (result[j]=='0')
+				result[j]='1';
 		}
     }
 
