@@ -30,6 +30,7 @@
 #define RSVD_OFFSET 17
 
 #define MAX_DIGIT 15
+#define MAX_BASE32_DIGIT 3
 
 #define MOV 0
 #define CMP 1
@@ -99,6 +100,7 @@ typedef struct dataTables {
 	int dc;
 	int data;
 	char *binaryData;
+	char *base32;
 	struct dataTables* next;
 } myDataTable;
 mySymbolList *symbolList;
@@ -124,7 +126,7 @@ mySymbolList *addSymbolNode (mySymbolList* symbolList, char* str, unsigned int d
 myDataTable *createDataNode (int dc, int data);
 myDataTable *addDataNode (myDataTable* dataTable, int dc, int data);
 
-char *to_base(int num, int base, char *result, int pad)
+char *decimalToBinary(int num, int base, char *result, int pad)
 {
 	int negativeNumber=0,oneFound=0;
 	int index = 0, i,j;
@@ -178,4 +180,24 @@ char *to_base(int num, int base, char *result, int pad)
     {
         return result + MAX_DIGIT - index;
     }
+}
+char *decimalToBase32 (int num, char *result) {
+	int quotient;
+	int i=0,j,temp;
+
+	char hexadecimalNumber[100] = {0};
+	quotient = num;
+	while(quotient!=0) {
+		temp = quotient % 32;
+		//To convert integer into character
+		if( temp < 10)
+			temp =temp + 48;
+		else
+			temp = temp + 55;
+		hexadecimalNumber[i++]= temp;
+		quotient = quotient / 32;
+	}
+	for (j = i ;j> 0;j--)
+		  result[i-j] = hexadecimalNumber[j-1];
+	return result;
 }
