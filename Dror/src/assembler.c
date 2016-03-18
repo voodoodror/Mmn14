@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <math.h>
 #include "assembler.h"
 
 char *lineToProcess;
@@ -26,29 +27,7 @@ int addressingTable[82] = { 1000, 1001, 10021, 10022, 10023, 1003, 1011, 10121, 
 int main(int argc, char **argv)
 {
 
-		long int decimalNumber,remainder,quotient;
-		int i=1,j,temp;
-
-		char hexadecimalNumber[100];
-		printf("Enter any decimal number: ");
-		scanf("%ld",&decimalNumber);
-		quotient = decimalNumber;
-		while(quotient!=0) {
-			temp = quotient % 32;
-			//To convert integer into character
-			if( temp < 10)
-					   temp =temp + 48; else
-					 temp = temp + 55;
-			hexadecimalNumber[i++]= temp;
-			quotient = quotient / 32;
-		}
-		printf("Equivalent hexadecimal value of decimal number %d: ",decimalNumber);
-		for (j = i -1 ;j> 0;j--)
-			  printf("%c",hexadecimalNumber[j]);
-		return 0;
-
-
-	/*int i=0*/
+	int i=0;
     FILE *fp;
 
     char *lineToProcess = malloc(sizeof(char) * BUF_SIZE);
@@ -88,7 +67,7 @@ int main(int argc, char **argv)
         if (!errorFlag) {
         	while (fgets(lineToProcess, MAX_LINE, fp))
 			{
-				second_parsing_line(lineToProcess, count+1);
+				/*second_parsing_line(lineToProcess, count+1);*/
 				count++;
 			}
         } else {
@@ -106,7 +85,7 @@ int main(int argc, char **argv)
 		printf("\n\nData Table:\n");
 		myDataTable* iterd;
 		for (iterd = dataTable; NULL != iterd; iterd = iterd->next)
-			printf("DC: \"%d\"\tDATA: \"%d\"\tBINARY DATA: \"%s\"\n",iterd->dc,iterd->data,iterd->binaryData);
+			printf("DC: \"%d\"\tDATA: \"%d\"\tBINARY DATA: \"%s\"\tBASE32 DATA: \"%s\"\n",iterd->dc,iterd->data,iterd->binaryData,iterd->base32);
 		printf("\n\n\n");
     }
     return 0;
@@ -160,7 +139,7 @@ void first_parsing_line (char *line, int count) {
 					printf("ERROR: Line %d - More than 1 symbol sign has been found.\n",count+1);
 					errorFlag+=1;
 				} else if (!symIsUpper(getSymbol(line,hasSymbol(line)))) {
-					printf("ERROR: Line %d - Symbol has other chars than uppercase.\n",count+1);
+					printf("ERROR: Line %d - Symbol has other chars than UPPERCASE.\n",count+1);
 					errorFlag+=1;
 				} else {
 					if (symbolCounter!=0) {
@@ -212,12 +191,18 @@ void first_parsing_line (char *line, int count) {
 					printf("%d: %s (entry found, ignoring in first parsing)\n",count+1,line);
 				} else if (strcmp(dotCommand,"extern") == 0) {
 					symbolPointer = getNextString(line+(sizeof(spaceChar)+strlen(dotCommand)+sizeof(spaceChar)));
-					if (symbolCounter == 0)
-						symbolList = createSymbolNode(symbolPointer,0,1,0);
-					else
-						symbolList = addSymbolNode(symbolList,symbolPointer,0,1,0);
-					symbolCounter++;
-					printf("%d: %s (extern found)\n",count+1,line);
+					dupSymbol = findDuplicateSym(symbolList,symbolPointer);
+					if (!dupSymbol) {
+						if (symbolCounter == 0)
+							symbolList = createSymbolNode(symbolPointer,0,1,0);
+						else
+							symbolList = addSymbolNode(symbolList,symbolPointer,0,1,0);
+						symbolCounter++;
+						printf("%d: %s (extern found)\n",count+1,line);
+					} else {
+						printf("ERROR: Line %d - Duplicate Symbol Detected.\n",count+1);
+						errorFlag+=1;
+					}
 				} else {
 					printf("ERROR: Line %d - Instruction line doesn't exist.\n",count+1);
 					errorFlag+=1;
@@ -257,7 +242,7 @@ void second_parsing_line (char *line, int count) {
 	myHashTable hashTable[ic];
 
 	strip_extra_spaces(line);
-	hashTable[0].dest_addr=to_base(3,2,temp,0);
+	hashTable[0].dest_addr=decimalToBinary(3,2,temp,0);
 	if (line[0] != ';' && strlen(line) != 0) {
 			if (hasSymbol(line) != 0) {
 						if (hasDot(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar))) != NULL) {
@@ -767,10 +752,13 @@ mySymbolList *addSymbolNode (mySymbolList* symbolList, char* str, unsigned int d
 myDataTable *createDataNode (int dc, int data) {
 	myDataTable* newData = malloc(sizeof(myDataTable));
 	char *temp = malloc(sizeof(char*));
+	char *temp2 = malloc(sizeof(char*));
+	char *endp = NULL;
 	if (NULL != newData){
 		newData->dc = dc;
 		newData->data = data;
-		newData->binaryData = to_base(data,2,temp,1);
+		newData->binaryData = decimalToBinary(data,2,temp,1);
+		newData->base32 = decimalToBase32(strtoul(newData->binaryData, &endp, 2),temp2);
 		newData->next = NULL;
 	}
 	return newData;
