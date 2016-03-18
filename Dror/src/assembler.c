@@ -20,16 +20,19 @@ int errorFlag;
 int dc, ic;
 int count;
 int externCounter,entryCounter;
+int hashTableCounter;
+int icForHashTable;
 FILE *obj, *ext, *ent, *fp;
 mySymbolList *symbolList;
 myCommandTable commandTable[COMMAND_SIZE];
 myDataTable *dataTable;
+myHashTable *hashTable;
 int addressingTable[82] = { 1000, 1001, 10021, 10022, 10023, 1003, 1011, 10121, 10122, 10123, 10123, 1013, 1100, 1101, 11011, 110121, 110122, 110123, 11013, 11021, 11022, 11023, 1103, 1110, 1111, 11111, 111121, 111122, 111123, 11113, 11121, 11122, 11123, 1113, 11210, 11211, 112121, 112122, 112123, 11213, 11311, 113123, 1200, 1201, 12021, 12022, 12023, 1203, 1211, 12121, 12122, 12123, 12123, 1213, 1300, 1301, 13021, 13022, 13023, 1303, 1311, 13121, 13122, 13123, 1313, 1411, 1413, 1511, 1513, 1601, 16023, 1611, 1613, 1711, 1713, 1811, 1813, 1911, 19121, 19122, 19123, 1913 };
 
 int main(int argc, char **argv)
 {
 
-	int i=0;
+	int i=0, j=0;
     char *lineToProcess = malloc(sizeof(char) * BUF_SIZE);
 
     init_command_table();
@@ -41,7 +44,8 @@ int main(int argc, char **argv)
     	dotLen = 0;
     	symbolCounter = 0;
     	errorFlag = 0;
-    	dc=0, ic=100;
+    	dc=0, ic=IC_MEM_ALLOCATION;
+    	icForHashTable=IC_MEM_ALLOCATION;
     	externCounter=0, entryCounter=0;
 
         sprintf(file_name, "%s", argv[i]);
@@ -77,6 +81,7 @@ int main(int argc, char **argv)
         if (!errorFlag) {
 			rewind(fp);
 			replaceStrAddr();
+			hashTable = malloc(sizeof(myHashTable)*(ic-IC_MEM_ALLOCATION));
         }
 
 		while (fgets(lineToProcess, MAX_LINE, fp))
@@ -103,7 +108,43 @@ int main(int argc, char **argv)
 		myDataTable* iterd;
 		for (iterd = dataTable; NULL != iterd; iterd = iterd->next)
 			printf("DC: \"%d\"\tDATA: \"%d\"\tBINARY DATA: \"%s\"\tBASE32 DATA: \"%s\"\n",iterd->dc,iterd->data,iterd->binaryData,iterd->base32);
-		printf("\n\n\n");
+
+		printf("\n\nHash Table:\n");
+		printf("IC\tERA\tDEST_REG\tDEST_ADDR\tSRC_REG\t\tSRC_ADDR\tOPCODE\tGROUP\tRND\tNOT_IN_USE\n");
+		for (j=0; j<ic-IC_MEM_ALLOCATION; j++)
+			printf("%d\t%d\t\t%d\t\t%d\t%d\t\t%d\t\t%d\t%d\t%d\t%d\t\n",hashTable[j].addr,hashTable[j].era,hashTable[j].dest_reg,hashTable[j].dest_addr,hashTable[j].src_reg,hashTable[j].src_addr,hashTable[j].opcode,hashTable[j].group,hashTable[j].rnd,hashTable[j].not_in_use);
+
+		/* close all the open files
+
+
+
+		/*for (i = 0; i < HASHSIZE; i++)
+		{
+			data_symtab[i] = NULL;
+			inst_symtab[i] = NULL;
+			exttab[i] = NULL;
+		}
+	    if (errorFlag == 1)
+	    {
+	    	printf("Output files were not created due to found errors at the input file\n\n");
+	        sprintf(file_name, "%s.obj", module_name);
+	        remove(file_name);
+	        sprintf(file_name, "%s.ext", module_name);
+	        remove(file_name);
+	        sprintf(file_name, "%s.ent", module_name);
+	        remove(file_name);
+	    }
+	    else if (extern_counter == 0)
+	    {
+	        sprintf(file_name, "%s.ext", module_name);
+	        remove(file_name);
+	    }
+	    else if (entry_counter == 0)
+	    {
+	        sprintf(file_name, "%s.ent", module_name);
+	        remove(file_name);
+	    }
+	    return 0;*/
     }
     return 0;
 }
@@ -181,7 +222,7 @@ void first_parsing_line (char *line, int count) {
 							dotCommand = getNextString(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar)));
 							commandFound = findCommand(dotCommand);
 							if (commandFound!=-1) {
-								extractResult = extractSym(commandFound);
+								extractResult = extractSym(commandFound,1);
 								if (extractResult) {
 									ic+=extractResult;
 									symbolPointer = getSymbol(line,hasSymbol(line));
@@ -228,7 +269,7 @@ void first_parsing_line (char *line, int count) {
 				dotCommand = getNextString(line);
 				commandFound = findCommand(dotCommand);
 				if (commandFound!=-1) {
-					extractResult = extractOperands(line+(sizeof(spaceChar)+strlen((char *)dotCommand)),commandFound);
+					extractResult = extractOperands(line+(sizeof(spaceChar)+strlen((char *)dotCommand)),commandFound,1);
 					if (extractResult)
 						printf("%d: %s command found: (\"%s\")\n",count+1,line,dotCommand);
 						ic+=extractResult;
@@ -247,14 +288,18 @@ void second_parsing_line (char *line, int count) {
 	int symFound;
 	char *temp = malloc(sizeof(char*));
 	int i=0;
-	myHashTable hashTable[ic];
+	int commandFound=-1;
+	int extractResult;
+
 
 	strip_extra_spaces(line);
 	if (line[0] != ';' && strlen(line) != 0) {
 			if (hasSymbol(line) != 0) {
-
-			}
-			else if (line[0] == '.'){
+				dotCommand = getNextString(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar)));
+				commandFound = findCommand(dotCommand);
+				extractResult = extractSym(commandFound,2);
+				hashTable[hashTableCounter++].addr = icForHashTable++;
+			} else if (line[0] == '.'){
 				dotCommand = getNextString(line+sizeof(dotChar));
 				if (strcmp(dotCommand,"entry") == 0) {
 					symbolPointer = getNextString(line+(sizeof(spaceChar)+strlen(dotCommand)+sizeof(spaceChar)));
@@ -267,48 +312,15 @@ void second_parsing_line (char *line, int count) {
 						errorFlag+=1;
 					}
 				}
-			} else if (line[0] == '.'){
-				dotCommand = getNextString(line+sizeof(dotChar));
-				if (strcmp(dotCommand,"entry") == 0) {
+			} else if (hasDot(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar))) != NULL) {
 
-				}
 			} else {
 				dotCommand = getNextString(line);
-				findCommand(dotCommand);
+				commandFound = findCommand(dotCommand);
+				extractResult = extractOperands(line+(sizeof(spaceChar)+strlen((char *)dotCommand)),commandFound,2);
+				hashTable[hashTableCounter++].addr = icForHashTable++;
 			}
 	}
-
-	/* close all the open files
-
-
-
-	/*for (i = 0; i < HASHSIZE; i++)
-	{
-		data_symtab[i] = NULL;
-		inst_symtab[i] = NULL;
-		exttab[i] = NULL;
-	}
-    if (errorFlag == 1)
-    {
-    	printf("Output files were not created due to found errors at the input file\n\n");
-        sprintf(file_name, "%s.obj", module_name);
-        remove(file_name);
-        sprintf(file_name, "%s.ext", module_name);
-        remove(file_name);
-        sprintf(file_name, "%s.ent", module_name);
-        remove(file_name);
-    }
-    else if (extern_counter == 0)
-    {
-        sprintf(file_name, "%s.ext", module_name);
-        remove(file_name);
-    }
-    else if (entry_counter == 0)
-    {
-        sprintf(file_name, "%s.ent", module_name);
-        remove(file_name);
-    }
-    return 0;*/
 }
 void replaceStrAddr() {
 	mySymbolList* iter;
@@ -472,11 +484,11 @@ int extractData(char *str, char *type) {
 		}
 	return 0;
 }
-int extractOperands(char *str, int opcode) {
+int extractOperands(char *str, int opcode, int phase) {
 	char rwString[BUF_SIZE];
 	char *rwPointer;
 	strcpy(rwString,str);
-	char *token;
+	char *token, *srcAddrValue, *destAddrValue;
 	int i=0,singleOperand=0,noOperands=0,srcAddr=-1,destAddr=-1,validateSuccess=0;
 	rwPointer = rwString;
 
@@ -515,13 +527,20 @@ int extractOperands(char *str, int opcode) {
 		rwPointer = rwString;
 
 		token = strsep(&rwPointer,",");
+		srcAddrValue = token;
 		srcAddr = recognizeOperand(token);
 
 		token = strsep(&rwPointer,",");
+		destAddrValue = token;
 		destAddr = recognizeOperand(token);
 
 		if (srcAddr!=-1 && destAddr!=-1) {
-			validateSuccess=validOperOpcode(opcode,srcAddr,destAddr);
+			if (phase==2) {
+				insertToDataTable(opcode,srcAddr,destAddr,srcAddrValue,destAddrValue);
+				return 2;
+			} else {
+				validateSuccess=validOperOpcode(opcode,srcAddr,destAddr);
+			}
 			if(validateSuccess!=0) {
 				return validateSuccess;
 			} else {
@@ -530,14 +549,18 @@ int extractOperands(char *str, int opcode) {
 				return validateSuccess;
 			}
 		}
-
-
-
 		return 1;
+
 	} else if (singleOperand) {
+		destAddrValue = token;
 		destAddr = recognizeOperand(token);
 		if (destAddr!=-1) {
-			validateSuccess=validOperOpcode(opcode,-1,destAddr);
+			if (phase==2) {
+				insertToDataTable(opcode,-1,destAddr,NULL,destAddrValue);
+				return 2;
+			} else {
+				validateSuccess=validOperOpcode(opcode,-1,destAddr);
+			}
 			if (validateSuccess!=0) {
 				return validateSuccess;
 			} else {
@@ -548,11 +571,38 @@ int extractOperands(char *str, int opcode) {
 		}
 		return 0;
 	} else if (noOperands) {
+			if (phase==2) {
+			insertToDataTable(opcode,-1,-1,NULL,NULL);
+			}
 		return 1;
 	} else {
 		printf("ERROR: Line %d - Do not place 2 commas side by side\n2. Please make sure you do not exceed 2 operands limit.\n",count+1);
 		errorFlag+=1;
 		return 0;
+	}
+}
+void insertToDataTable(int opcode, int srcAddr, int destAddr, char *srcAddrValue, char *destAddrValue) {
+	hashTable[hashTableCounter].opcode = opcode;
+	if (srcAddr==3)
+		hashTable[hashTableCounter].src_reg = atoi(srcAddrValue+1);
+	if (destAddr==3)
+		hashTable[hashTableCounter].dest_reg = atoi(destAddrValue+1);
+
+	if (srcAddr!=-1 && destAddr!=-1) {
+		hashTable[hashTableCounter].src_addr = srcAddr;
+		hashTable[hashTableCounter].dest_addr = destAddr;
+		hashTable[hashTableCounter].group = 2;
+
+		if (srcAddr==21 || destAddr==21) hashTable[hashTableCounter].rnd = 1;
+		if (srcAddr==22 || destAddr==22) hashTable[hashTableCounter].rnd = 2;
+		if (srcAddr==23 || destAddr==23) hashTable[hashTableCounter].rnd = 3;
+
+	} else if (srcAddr==-1 && destAddr!=-1) {
+		hashTable[hashTableCounter].group = 1;
+		if (destAddr==21) hashTable[hashTableCounter].rnd = 1;
+		if (destAddr==22) hashTable[hashTableCounter].rnd = 2;
+		if (destAddr==23) hashTable[hashTableCounter].rnd = 3;
+
 	}
 }
 int recognizeOperand(char *str) {

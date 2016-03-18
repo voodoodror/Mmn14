@@ -9,6 +9,7 @@
 #define BUF_SIZE 100
 #define MAX_ARRAY_SIZE 1000
 #define COMMAND_SIZE 16
+#define IC_MEM_ALLOCATION 100
 
 #define ERA_WIDTH 2
 #define DREG_WIDTH 3
@@ -48,7 +49,7 @@
 #define JSR 13
 #define RTS 14
 #define STOP 15
-#define extractSym(X) extractOperands(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar)+sizeof(dotChar)+strlen(dotCommand)),X);
+#define extractSym(X,Y) extractOperands(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar)+sizeof(dotChar)+strlen(dotCommand)),X,Y);
 #define extractSymData(X) \
 		extractData(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar)+sizeof(dotChar)+strlen(dotCommand)+sizeof(spaceChar)),X);\
 		if (extractResult) {\
@@ -116,12 +117,13 @@ int extractData(char* str, char * type);
 char *getSymbol(char* str, int pos);
 char *getNextString(char* str);
 char *hasQM(char* str);
-int extractOperands(char *str, int opcode);
+int extractOperands(char *str, int opcode, int phase);
 int findCommand(char *command);
 int findExistingSym(mySymbolList *symbolList,char *sym, char *type);
 int recognizeOperand(char *str);
 int validOperOpcode(int opcode, int srcAddr, int destAddr);
 void replaceStrAddr();
+void insertToDataTable(int opcode, int srcAddr, int destAddr, char *srcAddrValue, char *destAddrValue);
 mySymbolList *createSymbolNode (char* str, unsigned int dc, int external, int action);
 mySymbolList *addSymbolNode (mySymbolList* symbolList, char* str, unsigned int dc, int external, int action);
 myDataTable *createDataNode (int dc, int data);
