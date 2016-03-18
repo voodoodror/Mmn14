@@ -19,6 +19,8 @@ int symbolCounter;
 int errorFlag;
 int dc, ic;
 int count;
+int externCounter,entryCounter;
+FILE *obj, *ext, *ent, *fp;
 mySymbolList *symbolList;
 myCommandTable commandTable[COMMAND_SIZE];
 myDataTable *dataTable;
@@ -28,8 +30,6 @@ int main(int argc, char **argv)
 {
 
 	int i=0;
-    FILE *fp;
-
     char *lineToProcess = malloc(sizeof(char) * BUF_SIZE);
 
     init_command_table();
@@ -42,9 +42,22 @@ int main(int argc, char **argv)
     	symbolCounter = 0;
     	errorFlag = 0;
     	dc=0, ic=100;
+    	externCounter=0, entryCounter=0;
 
         sprintf(file_name, "%s", argv[i]);
         fp = fopen(file_name, "r");
+
+        sprintf(file_name, "%s.ent", argv[i]);
+		ent = fopen(file_name, "w");
+
+		sprintf(file_name, "%s.ext", argv[i]);
+		ext = fopen(file_name, "w");
+
+		sprintf(file_name, "%s.obj", argv[i]);
+		obj = fopen(file_name, "w");
+
+
+		 /*print header */
 
         if (fp == NULL)
         {
@@ -61,19 +74,23 @@ int main(int argc, char **argv)
         }
 
         count=0;
-        rewind(fp);
-        replaceStrAddr();
-
         if (!errorFlag) {
-        	while (fgets(lineToProcess, MAX_LINE, fp))
-			{
-				/*second_parsing_line(lineToProcess, count+1);*/
-				count++;
-			}
-        } else {
-        	printf("Please fix the errors and try again.\n");
+			rewind(fp);
+			replaceStrAddr();
         }
+
+		while (fgets(lineToProcess, MAX_LINE, fp))
+		{
+			if (!errorFlag) {
+			second_parsing_line(lineToProcess, count+1);
+			count++;
+			}
+		}
+        fclose(ent);
         fclose(fp);
+        fclose(obj);
+		fclose(ext);
+
         printf("\n\n*DEBUG*\n");
         printf("Total Errors in program: %d\n",errorFlag);
         printf("IC: %d\tDC: %d\n\n",ic,dc);
@@ -144,7 +161,7 @@ void first_parsing_line (char *line, int count) {
 				} else {
 					if (symbolCounter!=0) {
 						symbolPointer = getSymbol(line,hasSymbol(line));
-						dupSymbol = findDuplicateSym(symbolList,symbolPointer);
+						dupSymbol = findExistingSym(symbolList,symbolPointer,"symbol");
 					}
 					if (!dupSymbol) {
 						if (hasDot(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar))) != NULL) {
@@ -191,7 +208,7 @@ void first_parsing_line (char *line, int count) {
 					printf("%d: %s (entry found, ignoring in first parsing)\n",count+1,line);
 				} else if (strcmp(dotCommand,"extern") == 0) {
 					symbolPointer = getNextString(line+(sizeof(spaceChar)+strlen(dotCommand)+sizeof(spaceChar)));
-					dupSymbol = findDuplicateSym(symbolList,symbolPointer);
+					dupSymbol = findExistingSym(symbolList,symbolPointer,"symbol");
 					if (!dupSymbol) {
 						if (symbolCounter == 0)
 							symbolList = createSymbolNode(symbolPointer,0,1,0);
@@ -225,51 +242,35 @@ void first_parsing_line (char *line, int count) {
 }
 void second_parsing_line (char *line, int count) {
 
-
-	/* pointers for the files
-    FILE *obj, *ext, *ent;
-    sprintf(file_name, "%s.obj", module_name);
-    obj = fopen(file_name, "w");
-    sprintf(file_name, "%s.ext", module_name);
-    ext = fopen(file_name, "w");
-    sprintf(file_name, "%s.ent", module_name);
-    ent = fopen(file_name, "w");
-	 print header */
-
 	char *symbolPointer;
 	char *dotCommand;
-	char *temp = malloc(sizeof(char*));;
+	int symFound;
+	char *temp = malloc(sizeof(char*));
+	int i=0;
 	myHashTable hashTable[ic];
 
 	strip_extra_spaces(line);
-	hashTable[0].dest_addr=decimalToBinary(3,2,temp,0);
 	if (line[0] != ';' && strlen(line) != 0) {
 			if (hasSymbol(line) != 0) {
-						if (hasDot(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar))) != NULL) {
-							symbolPointer = getSymbol(line,hasSymbol(line));
-							dotCommand = getNextString(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar)+sizeof(dotChar)));
-							if (strcmp(dotCommand,"string") == 0) {
-							} else if (strcmp(dotCommand,"data") == 0) {
-							}
-						} else {
-							dotCommand = getNextString(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar)));
-							findCommand(dotCommand);
-						}
+
+			}
+			else if (line[0] == '.'){
+				dotCommand = getNextString(line+sizeof(dotChar));
+				if (strcmp(dotCommand,"entry") == 0) {
+					symbolPointer = getNextString(line+(sizeof(spaceChar)+strlen(dotCommand)+sizeof(spaceChar)));
+					symFound = findExistingSym(symbolList,symbolPointer,"entry");
+					if (symFound!=0) {
+						fprintf(ent, "%s\t%s\n", symbolPointer, decimalToBase32(symFound,temp));
+						entryCounter++;
+					} else {
+						printf("ERROR: Line %d - Entry symbol does not present in symbol list.\n",count+1);
+						errorFlag+=1;
+					}
+				}
 			} else if (line[0] == '.'){
 				dotCommand = getNextString(line+sizeof(dotChar));
 				if (strcmp(dotCommand,"entry") == 0) {
 
-				} else if (strcmp(dotCommand,"extern") == 0) {
-					symbolPointer = getNextString(line+(sizeof(spaceChar)+strlen(dotCommand)+sizeof(spaceChar)));
-					if (symbolCounter == 0)
-						symbolList = createSymbolNode(symbolPointer,0,1,0);
-					else
-						symbolList = addSymbolNode(symbolList,symbolPointer,0,1,0);
-					symbolCounter++;
-					printf("%d: %s (extern found)\n",count+1,line);
-				} else {
-					printf("ERROR: Line %d - Instruction line doesn't exist.\n",count+1);
-					errorFlag+=1;
 				}
 			} else {
 				dotCommand = getNextString(line);
@@ -278,11 +279,10 @@ void second_parsing_line (char *line, int count) {
 	}
 
 	/* close all the open files
-    fclose(obj);
-    fclose(ext);
-    fclose(ent);
 
-	for (i = 0; i < HASHSIZE; i++)
+
+
+	/*for (i = 0; i < HASHSIZE; i++)
 	{
 		data_symtab[i] = NULL;
 		inst_symtab[i] = NULL;
@@ -318,11 +318,19 @@ void replaceStrAddr() {
 		}
 	}
 }
-int findDuplicateSym(mySymbolList *symbolList,char *sym) {
+int findExistingSym(mySymbolList *symbolList,char *sym, char *type) {
 	mySymbolList* iter;
 	for (iter = symbolList; NULL != iter; iter = iter->next) {
-		if(strcmp(iter->Sym,sym) == 0) {
-			return 1;
+		if(strcmp(iter->Sym,sym)==0) {
+			if (strcmp(type,"entry") == 0) {
+					if (iter->ext==0) {
+						return iter->addr;
+					} else {
+						return 0;
+					}
+			} else if (strcmp(type,"symbol") == 0) {
+					return 1;
+			}
 		}
 	}
 	return 0;

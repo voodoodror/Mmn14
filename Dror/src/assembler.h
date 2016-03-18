@@ -86,6 +86,7 @@ typedef struct hashTables {
     unsigned int group      : GROUP_WIDTH;
     unsigned int rnd        : RND_WIDTH;
     unsigned int not_in_use : NIU_WIDTH;
+    char *binaryData;
 } myHashTable;
 
 typedef struct commandTables {
@@ -117,7 +118,7 @@ char *getNextString(char* str);
 char *hasQM(char* str);
 int extractOperands(char *str, int opcode);
 int findCommand(char *command);
-int findDuplicateSym(mySymbolList *symbolList,char *sym);
+int findExistingSym(mySymbolList *symbolList,char *sym, char *type);
 int recognizeOperand(char *str);
 int validOperOpcode(int opcode, int srcAddr, int destAddr);
 void replaceStrAddr();
