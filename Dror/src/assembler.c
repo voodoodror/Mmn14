@@ -3,6 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
+#include <time.h>
 #include "assembler.h"
 
 char *lineToProcess;
@@ -91,6 +92,10 @@ int main(int argc, char **argv)
 			count++;
 			}
 		}
+        if (!errorFlag) {
+        	hashTableToFile();
+        }
+
         fclose(ent);
         fclose(fp);
         fclose(obj);
@@ -110,9 +115,9 @@ int main(int argc, char **argv)
 			printf("DC: \"%d\"\tDATA: \"%d\"\tBINARY DATA: \"%s\"\tBASE32 DATA: \"%s\"\n",iterd->dc,iterd->data,iterd->binaryData,iterd->base32);
 
 		printf("\n\nHash Table:\n");
-		printf("IC\tERA\tDEST_REG\tDEST_ADDR\tSRC_REG\t\tSRC_ADDR\tOPCODE\tGROUP\tRND\tNOT_IN_USE\n");
+		printf("IC\tERA\tDEST_REG\tDEST_ADDR\tSRC_REG\t\tSRC_ADDR\tOPCODE\tGROUP\tRND\tDATA\tDATA_NUM\tNOT_IN_USE\n");
 		for (j=0; j<ic-IC_MEM_ALLOCATION; j++)
-			printf("%d\t%d\t\t%d\t\t%d\t%d\t\t%d\t\t%d\t%d\t%d\t%d\t\n",hashTable[j].addr,hashTable[j].era,hashTable[j].dest_reg,hashTable[j].dest_addr,hashTable[j].src_reg,hashTable[j].src_addr,hashTable[j].opcode,hashTable[j].group,hashTable[j].rnd,hashTable[j].not_in_use);
+			printf("%d\t%d\t\t%d\t\t%d\t%d\t\t%d\t\t%d\t%d\t%d\t%d\t%d\t\t%d\t\n",hashTable[j].addr,hashTable[j].era,hashTable[j].dest_reg,hashTable[j].dest_addr,hashTable[j].src_reg,hashTable[j].src_addr,hashTable[j].opcode,hashTable[j].group,hashTable[j].rnd,hashTable[j].data,hashTable[j].datanum,hashTable[j].not_in_use);
 
 		/* close all the open files
 
@@ -190,15 +195,15 @@ void first_parsing_line (char *line, int count) {
 	if (line[0] != ';' && strlen(line) != 0) {
 		if (!isalpha(line[0]) && line[0] != '.') {
 			printf("ERROR: Line %d - line MUST begin with a letter or a dot.\n",count+1);
-			errorFlag+=1;
+			errorFlag++;
 		} else {
 			if (hasSymbol(line) != 0) {
 				if (hasSymbol(line+(symbolLen+sizeof(symbolChar))) != 0) {
 					printf("ERROR: Line %d - More than 1 symbol sign has been found.\n",count+1);
-					errorFlag+=1;
+					errorFlag++;
 				} else if (!symIsUpper(getSymbol(line,hasSymbol(line)))) {
 					printf("ERROR: Line %d - Symbol has other chars than UPPERCASE.\n",count+1);
-					errorFlag+=1;
+					errorFlag++;
 				} else {
 					if (symbolCounter!=0) {
 						symbolPointer = getSymbol(line,hasSymbol(line));
@@ -216,7 +221,7 @@ void first_parsing_line (char *line, int count) {
 								extractResult = extractSymData("data");
 							} else {
 								printf("ERROR: Line %d - Instruction line doesn't exist. Make you write everything in lowercase.\n",count+1);
-								errorFlag+=1;
+								errorFlag++;
 							}
 						} else {
 							dotCommand = getNextString(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar)));
@@ -235,12 +240,12 @@ void first_parsing_line (char *line, int count) {
 								}
 							} else {
 								printf("ERROR: Line %d - Command not found.\n",count+1);
-								errorFlag+=1;
+								errorFlag++;
 							}
 						}
 					} else {
 						printf("ERROR: Line %d - Duplicate Symbol Detected.\n",count+1);
-						errorFlag+=1;
+						errorFlag++;
 					}
 				}
 			} else if (line[0] == '.'){
@@ -259,11 +264,11 @@ void first_parsing_line (char *line, int count) {
 						printf("%d: %s (extern found)\n",count+1,line);
 					} else {
 						printf("ERROR: Line %d - Duplicate Symbol Detected.\n",count+1);
-						errorFlag+=1;
+						errorFlag++;
 					}
 				} else {
 					printf("ERROR: Line %d - Instruction line doesn't exist.\n",count+1);
-					errorFlag+=1;
+					errorFlag++;
 				}
 			} else {
 				dotCommand = getNextString(line);
@@ -275,7 +280,7 @@ void first_parsing_line (char *line, int count) {
 						ic+=extractResult;
 				} else {
 					printf("ERROR: Line %d - Operand doesn't exist.\n",count+1);
-					errorFlag+=1;
+					errorFlag++;
 				}
 			}
 		}
@@ -295,31 +300,41 @@ void second_parsing_line (char *line, int count) {
 	strip_extra_spaces(line);
 	if (line[0] != ';' && strlen(line) != 0) {
 			if (hasSymbol(line) != 0) {
-				dotCommand = getNextString(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar)));
-				commandFound = findCommand(dotCommand);
-				extractResult = extractSym(commandFound,2);
-				hashTable[hashTableCounter++].addr = icForHashTable++;
+				if (hasDot(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar))) == NULL) {
+					dotCommand = getNextString(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar)));
+					commandFound = findCommand(dotCommand);
+					extractResult = extractSym(commandFound,2);
+					incHashTable();
+				}
 			} else if (line[0] == '.'){
 				dotCommand = getNextString(line+sizeof(dotChar));
 				if (strcmp(dotCommand,"entry") == 0) {
 					symbolPointer = getNextString(line+(sizeof(spaceChar)+strlen(dotCommand)+sizeof(spaceChar)));
 					symFound = findExistingSym(symbolList,symbolPointer,"entry");
-					if (symFound!=0) {
+					if (symFound!=-1) {
 						fprintf(ent, "%s\t%s\n", symbolPointer, decimalToBase32(symFound,temp));
 						entryCounter++;
 					} else {
 						printf("ERROR: Line %d - Entry symbol does not present in symbol list.\n",count+1);
-						errorFlag+=1;
+						errorFlag++;
 					}
 				}
-			} else if (hasDot(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar))) != NULL) {
-
 			} else {
 				dotCommand = getNextString(line);
 				commandFound = findCommand(dotCommand);
 				extractResult = extractOperands(line+(sizeof(spaceChar)+strlen((char *)dotCommand)),commandFound,2);
-				hashTable[hashTableCounter++].addr = icForHashTable++;
+				incHashTable();
 			}
+	}
+}
+void hashTableToFile() {
+	char *temp=malloc(sizeof(char*));
+	int i=0;
+	for (i=0; i<ic-IC_MEM_ALLOCATION; i++) {
+		if (hashTable[i].era==0 && hashTable[i].src_addr!=0 && hashTable[i].dest_addr!=0) {
+			sprintf(hashTable[i].binaryData,"%d\t0%s%s%s%s%s%s",hashTable[i].addr,decimalToBinary(hashTable[i].rnd,2,temp,1,RND_WIDTH),decimalToBinary(hashTable[i].group,2,temp,1,GROUP_WIDTH),decimalToBinary(hashTable[i].opcode,2,temp,1,OPCODE_WIDTH),decimalToBinary(hashTable[i].src_addr,2,temp,1,SADDR_WIDTH),decimalToBinary(hashTable[i].dest_addr,2,temp,1,DADDR_WIDTH),decimalToBinary(hashTable[i].era,2,temp,1,ERA_WIDTH));
+			printf("%s",hashTable[i].binaryData);
+		}
 	}
 }
 void replaceStrAddr() {
@@ -332,16 +347,37 @@ void replaceStrAddr() {
 }
 int findExistingSym(mySymbolList *symbolList,char *sym, char *type) {
 	mySymbolList* iter;
+	int totalSym=0,i=0,numberFound=0;
 	for (iter = symbolList; NULL != iter; iter = iter->next) {
-		if(strcmp(iter->Sym,sym)==0) {
-			if (strcmp(type,"entry") == 0) {
+		if (sym!=NULL) {
+			if(strcmp(iter->Sym,sym)==0) {
+				if (strcmp(type,"entry") == 0) {
 					if (iter->ext==0) {
 						return iter->addr;
 					} else {
-						return 0;
+						return -1;
 					}
-			} else if (strcmp(type,"symbol") == 0) {
+				} else if (strcmp(type,"symbol") == 0) {
 					return 1;
+				} else if (strcmp(type,"data") == 0) {
+					return iter->addr;
+				} else {
+					return -1;
+				}
+			}
+		}
+		totalSym++;
+	}
+	if (strcmp(type,"random")==0) {
+		while (!numberFound) {
+			srand(time(NULL));
+			int r = ( rand() % totalSym ) + 1;
+			iter = symbolList;
+			for (i=0; i<r; i++) {
+				iter = iter->next;
+			}
+			if (iter->ext==0) {
+				return iter->addr;
 			}
 		}
 	}
@@ -414,7 +450,7 @@ int extractData(char *str, char *type) {
 	rwPointer = rwString;
 	if (str == NULL) {
 		printf("ERROR: Line %d - No data has been found in string.\n",count+1);
-		errorFlag+=1;
+		errorFlag++;
 		return 0;
 	}
 	if (strcmp(type,"data") == 0) {
@@ -422,13 +458,13 @@ int extractData(char *str, char *type) {
 		token = strsep(&rwPointer,",");
 		if (token == NULL) {
 			printf("ERROR: Line %d - Error occurred while trying to parse data field.\n1. Please make sure you don\'t have comma at the beginning or end of the string.\n2. Don't put 2 commas side by side.\n",count+1);
-			errorFlag+=1;
+			errorFlag++;
 			return 0;
 		}
 		while (token != NULL) {
 			if ((strlen(token)<=1) && (!isdigit(token[0]))) {
 				printf("ERROR: Line %d - Empty or invalid char found.\n",count+1);
-				errorFlag+=1;
+				errorFlag++;
 				return 0;
 			}
 			token = strsep(&rwPointer,",");
@@ -474,11 +510,11 @@ int extractData(char *str, char *type) {
 				return 1;
 			} else if (qmFound<=2) {
 				printf("ERROR: Line %d - No quotation marks found for string!\n",count+1);
-				errorFlag+=1;
+				errorFlag++;
 				return 0;
 			} else if (qmFound>2) {
 				printf("ERROR: Line %d - More than 1 quotation mark has been found!\n",count+1);
-				errorFlag+=1;
+				errorFlag++;
 				return 0;
 			}
 		}
@@ -496,7 +532,7 @@ int extractOperands(char *str, int opcode, int phase) {
 	if (opcode==14 || opcode==15) {
 		if (token!=NULL) {
 			printf("ERROR: Line %d - You can't use operands with this command!\n",count+1);
-			errorFlag+=1;
+			errorFlag++;
 			return 0;
 		}
 		noOperands=1;
@@ -506,7 +542,7 @@ int extractOperands(char *str, int opcode, int phase) {
 			singleOperand=1;
 		} else {
 			printf("ERROR: Line %d - Invalid addressing for this operand.\n",count+1);
-			errorFlag+=1;
+			errorFlag++;
 			return 0;
 		}
 	}
@@ -516,7 +552,7 @@ int extractOperands(char *str, int opcode, int phase) {
 	while (token != NULL && !singleOperand && !noOperands) {
 		if (strcmp(token,"\0")==0) {
 			printf("ERROR: Line %d - Empty or invalid operand has been found.\n",count+1);
-			errorFlag+=1;
+			errorFlag++;
 			return 0;
 		}
 		token = strsep(&rwPointer,",");
@@ -545,7 +581,7 @@ int extractOperands(char *str, int opcode, int phase) {
 				return validateSuccess;
 			} else {
 				printf("ERROR: Line %d - Invalid operands received for this command.\n",count+1);
-				errorFlag+=1;
+				errorFlag++;
 				return validateSuccess;
 			}
 		}
@@ -565,44 +601,122 @@ int extractOperands(char *str, int opcode, int phase) {
 				return validateSuccess;
 			} else {
 				printf("ERROR: Line %d - Invalid operands received for this command.\n",count+1);
-				errorFlag+=1;
+				errorFlag++;
 				return 0;
 			}
 		}
 		return 0;
 	} else if (noOperands) {
-			if (phase==2) {
+		if (phase==2) {
 			insertToDataTable(opcode,-1,-1,NULL,NULL);
-			}
+		}
 		return 1;
 	} else {
 		printf("ERROR: Line %d - Do not place 2 commas side by side\n2. Please make sure you do not exceed 2 operands limit.\n",count+1);
-		errorFlag+=1;
+		errorFlag++;
 		return 0;
 	}
 }
 void insertToDataTable(int opcode, int srcAddr, int destAddr, char *srcAddrValue, char *destAddrValue) {
+	int result=-1;
+	char *temp = malloc(sizeof(char*));
+
 	hashTable[hashTableCounter].opcode = opcode;
-	if (srcAddr==3)
-		hashTable[hashTableCounter].src_reg = atoi(srcAddrValue+1);
-	if (destAddr==3)
-		hashTable[hashTableCounter].dest_reg = atoi(destAddrValue+1);
 
 	if (srcAddr!=-1 && destAddr!=-1) {
 		hashTable[hashTableCounter].src_addr = srcAddr;
 		hashTable[hashTableCounter].dest_addr = destAddr;
 		hashTable[hashTableCounter].group = 2;
 
-		if (srcAddr==21 || destAddr==21) hashTable[hashTableCounter].rnd = 1;
-		if (srcAddr==22 || destAddr==22) hashTable[hashTableCounter].rnd = 2;
-		if (srcAddr==23 || destAddr==23) hashTable[hashTableCounter].rnd = 3;
+		if (srcAddr==21) {
+			hashTable[hashTableCounter].rnd = 1;
+			incHashTable();
+			srand(time(NULL));
+			int r = rand();
+			hashTable[hashTableCounter].src_reg = r;
+		}
+		if (destAddr==21) {
+			hashTable[hashTableCounter].rnd = 1;
+			incHashTable();
+			srand(time(NULL));
+			int r = rand();
+			hashTable[hashTableCounter].dest_reg = r;
+		}
+		if (srcAddr==22 || destAddr==22) {
+			hashTable[hashTableCounter].rnd = 2;
+			incHashTable();
+			srand(time(NULL));
+			int r = rand() % 8192;
+			hashTable[hashTableCounter].datanum = r;
+		}
+		if (srcAddr==23 || destAddr==23) {
+			hashTable[hashTableCounter].rnd = 3;
+			incHashTable();
+			hashTable[hashTableCounter].era = 2;
+			hashTable[hashTableCounter].data = findExistingSym(symbolList,NULL,"random");
+		}
 
 	} else if (srcAddr==-1 && destAddr!=-1) {
 		hashTable[hashTableCounter].group = 1;
-		if (destAddr==21) hashTable[hashTableCounter].rnd = 1;
-		if (destAddr==22) hashTable[hashTableCounter].rnd = 2;
-		if (destAddr==23) hashTable[hashTableCounter].rnd = 3;
+	} else if (srcAddr==-1 && destAddr==-1) {
 
+	}
+	if (srcAddr==3 && destAddr==3) {
+		incHashTable();
+	}
+	if (srcAddr==3) {
+		if (destAddr!=3) {
+			incHashTable();
+		}
+		hashTable[hashTableCounter].src_reg = atoi(srcAddrValue+1);
+	}
+	if (destAddr==3) {
+		if (srcAddr!=3) {
+			incHashTable();
+		}
+		hashTable[hashTableCounter].dest_reg = atoi(destAddrValue+1);
+	}
+	if(srcAddr==1) {
+		incHashTable();
+		result = findExistingSym(symbolList,srcAddrValue,"data");
+		if (result==-1)
+		{
+			errorFlag++;
+			printf("ERROR! Label does not found.\n");
+		}
+		if (result==0) {
+			hashTable[hashTableCounter].era = 1;
+			fprintf(ext, "%s\t%s\n", destAddrValue, decimalToBase32(icForHashTable,temp));
+			externCounter++;
+		} else {
+			hashTable[hashTableCounter].era = 2;
+		}
+		hashTable[hashTableCounter].data = result;
+	}
+	if(destAddr==1) {
+		incHashTable();
+		result = findExistingSym(symbolList,destAddrValue,"data");
+		if (result==-1)
+		{
+			errorFlag++;
+			printf("ERROR! Label does not found.\n");
+		}
+		if (result==0) {
+			hashTable[hashTableCounter].era = 1;
+			fprintf(ext, "%s\t%s\n", destAddrValue, decimalToBase32(icForHashTable,temp));
+			externCounter++;
+		} else {
+			hashTable[hashTableCounter].era = 2;
+		}
+		hashTable[hashTableCounter].data = result;
+	}
+	if(srcAddr==0) {
+		incHashTable();
+		hashTable[hashTableCounter].datanum = atoi(srcAddrValue+1);
+	}
+	if(destAddr==0) {
+		incHashTable();
+		hashTable[hashTableCounter].datanum = atoi(destAddrValue+1);
 	}
 }
 int recognizeOperand(char *str) {
@@ -617,12 +731,12 @@ int recognizeOperand(char *str) {
 				return 3;
 			} else {
 				printf("ERROR: Line %d - Invalid register number in addressing.\n",count+1);
-				errorFlag+=1;
+				errorFlag++;
 				return invalidResult;
 			}
 		} else {
 			printf("ERROR: Line %d - Too LESS or MUCH chars for register operand.\n",count+1);
-			errorFlag+=1;
+			errorFlag++;
 			return invalidResult;
 		}
 	} else if (str[0] == '#') {
@@ -633,7 +747,7 @@ int recognizeOperand(char *str) {
 				return 0;
 			} else {
 				printf("ERROR: Line %d - Invalid number entered.\n",count+1);
-				errorFlag+=1;
+				errorFlag++;
 				return invalidResult;
 			}
 		} else {
@@ -643,7 +757,7 @@ int recognizeOperand(char *str) {
 				return 0;
 			} else {
 				printf("ERROR: Line %d - Invalid number entered.\n",count+1);
-				errorFlag+=1;
+				errorFlag++;
 				return invalidResult;
 			}
 		}
@@ -660,7 +774,7 @@ int recognizeOperand(char *str) {
 			str=str+1;
 		}
 		printf("ERROR: Line %d - Invalid data operand entered.\n",count+1);
-		errorFlag+=1;
+		errorFlag++;
 		return invalidResult;
 	}
 }
@@ -815,7 +929,7 @@ myDataTable *createDataNode (int dc, int data) {
 	if (NULL != newData){
 		newData->dc = dc;
 		newData->data = data;
-		newData->binaryData = decimalToBinary(data,2,temp,1);
+		newData->binaryData = decimalToBinary(data,2,temp,1,8);
 		newData->base32 = decimalToBase32(strtoul(newData->binaryData, &endp, 2),temp2);
 		newData->next = NULL;
 	}

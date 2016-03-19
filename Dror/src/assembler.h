@@ -20,6 +20,8 @@
 #define GROUP_WIDTH 2
 #define RND_WIDTH 2
 #define NIU_WIDTH 1
+#define DATA_WIDTH 13
+#define DATANUM_WIDTH 13
 
 #define COMB_OFFSET 0
 #define DREG_OFFSET 2
@@ -67,6 +69,8 @@
 		memcpy(&tmp,&addressingDest[j-2],sizeof(int));\
 		memcpy(&addressingDest[j-2],&addressingDest[j-1],sizeof(int));\
 		memcpy(&addressingDest[j-1],&tmp,sizeof(int));
+#define incHashTable() \
+		hashTable[hashTableCounter++].addr = icForHashTable++;
 
 typedef struct symbolLists {
 	char *Sym;
@@ -86,6 +90,8 @@ typedef struct hashTables {
     unsigned int opcode     : OPCODE_WIDTH;
     unsigned int group      : GROUP_WIDTH;
     unsigned int rnd        : RND_WIDTH;
+    unsigned int data		: DATA_WIDTH;
+    int datanum				: DATANUM_WIDTH;
     unsigned int not_in_use : NIU_WIDTH;
     char *binaryData;
 } myHashTable;
@@ -124,17 +130,18 @@ int recognizeOperand(char *str);
 int validOperOpcode(int opcode, int srcAddr, int destAddr);
 void replaceStrAddr();
 void insertToDataTable(int opcode, int srcAddr, int destAddr, char *srcAddrValue, char *destAddrValue);
+void hashTableToFile();
 mySymbolList *createSymbolNode (char* str, unsigned int dc, int external, int action);
 mySymbolList *addSymbolNode (mySymbolList* symbolList, char* str, unsigned int dc, int external, int action);
 myDataTable *createDataNode (int dc, int data);
 myDataTable *addDataNode (myDataTable* dataTable, int dc, int data);
 
-char *decimalToBinary(int num, int base, char *result, int pad)
+char *decimalToBinary(int num, int base, char *result, int pad, int bit_len)
 {
 	int negativeNumber=0,oneFound=0;
 	int index = 0, i,j;
-	char tmp[MAX_DIGIT + 1];
-	for (i = 0; i < MAX_DIGIT; i++) /* reset all the cells */
+	char tmp[bit_len + 1];
+	for (i = 0; i < bit_len; i++) /* reset all the cells */
 	{
 		result[i] = '0';
 		tmp[i] = '0';
@@ -150,17 +157,17 @@ char *decimalToBinary(int num, int base, char *result, int pad)
 		index++;
 	}
 
-	for (i = 0; i < MAX_DIGIT; i++)
+	for (i = 0; i < bit_len; i++)
 	{
-		result[i] = tmp[MAX_DIGIT - 1 - i];
+		result[i] = tmp[bit_len - 1 - i];
 	}
     result[i] = '\0';
 
     if(negativeNumber) {
     	i=0;
     	while (!oneFound) {
-    		if (result[MAX_DIGIT-i]=='1') {
-    			i=MAX_DIGIT-i;
+    		if (result[bit_len-i]=='1') {
+    			i=bit_len-i;
     			oneFound=1;
     		} else {
     			i++;
@@ -181,7 +188,7 @@ char *decimalToBinary(int num, int base, char *result, int pad)
     }
     else
     {
-        return result + MAX_DIGIT - index;
+        return result + bit_len - index;
     }
 }
 char *decimalToBase32 (int num, char *result) {
