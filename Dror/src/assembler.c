@@ -730,17 +730,19 @@ void insertToDataTable(int opcode, int srcAddr, int destAddr, char *srcAddrValue
 	if (srcAddr==3 && destAddr==3) {
 		incHashTable();
 	}
-	if (srcAddr==3) {
-		if (destAddr!=3) {
+	if (srcAddr==3 || srcAddr==21) {
+		if (destAddr!=3 && destAddr!=21) {
 			incHashTable();
 		}
-		hashTable[hashTableCounter].src_reg = atoi(srcAddrValue+1);
+		if (srcAddr==3)
+			hashTable[hashTableCounter].src_reg = atoi(srcAddrValue+1);
 	}
-	if (destAddr==3) {
-		if (srcAddr!=3) {
+	if (destAddr==3 || destAddr==21) {
+		if (srcAddr!=3 && srcAddr!=21) {
 			incHashTable();
 		}
-		hashTable[hashTableCounter].dest_reg = atoi(destAddrValue+1);
+		if (destAddr==3)
+			hashTable[hashTableCounter].dest_reg = atoi(destAddrValue+1);
 	}
 	if(srcAddr==1) {
 		incHashTable();
