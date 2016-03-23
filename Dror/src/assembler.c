@@ -331,9 +331,62 @@ void hashTableToFile() {
 	char *temp=malloc(sizeof(char*));
 	int i=0;
 	for (i=0; i<ic-IC_MEM_ALLOCATION; i++) {
-		if (hashTable[i].era==0 && hashTable[i].src_addr!=0 && hashTable[i].dest_addr!=0) {
-			sprintf(hashTable[i].binaryData,"%d\t0%s%s%s%s%s%s",hashTable[i].addr,decimalToBinary(hashTable[i].rnd,2,temp,1,RND_WIDTH),decimalToBinary(hashTable[i].group,2,temp,1,GROUP_WIDTH),decimalToBinary(hashTable[i].opcode,2,temp,1,OPCODE_WIDTH),decimalToBinary(hashTable[i].src_addr,2,temp,1,SADDR_WIDTH),decimalToBinary(hashTable[i].dest_addr,2,temp,1,DADDR_WIDTH),decimalToBinary(hashTable[i].era,2,temp,1,ERA_WIDTH));
-			printf("%s",hashTable[i].binaryData);
+		if (hashTable[i].era==0 && (hashTable[i].src_addr!=0 || hashTable[i].dest_addr!=0 || hashTable[i].opcode!=0)) {
+			/*sprintf(hashTable[i].binaryData + strlen(hashTable[i].binaryData),"%d",hashTable[i].addr);*/
+			temp = decimalToBinary(hashTable[i].rnd,2,temp,1,RND_WIDTH);
+			printf("0-%s-",temp);
+			/*sprintf(hashTable[i].binaryData + strlen(hashTable[i].binaryData),"%s",temp);*/
+			temp = decimalToBinary(hashTable[i].group,2,temp,1,GROUP_WIDTH);
+			printf("%s-",temp);
+			/*sprintf(hashTable[i].binaryData + strlen(hashTable[i].binaryData),"%s",temp);*/
+			temp = decimalToBinary(hashTable[i].opcode,2,temp,1,OPCODE_WIDTH);
+			printf("%s-",temp);
+			/*sprintf(hashTable[i].binaryData + strlen(hashTable[i].binaryData),"%s",temp);*/
+			temp = decimalToBinary(hashTable[i].src_addr,2,temp,1,SADDR_WIDTH);
+			printf("%s-",temp);
+			/*sprintf(hashTable[i].binaryData + strlen(hashTable[i].binaryData),"%s",temp);*/
+			temp = decimalToBinary(hashTable[i].dest_addr,2,temp,1,DADDR_WIDTH);
+			printf("%s-",temp);
+			/*sprintf(hashTable[i].binaryData + strlen(hashTable[i].binaryData),"%s",temp);*/
+			temp = decimalToBinary(hashTable[i].era,2,temp,1,ERA_WIDTH);
+			printf("%s\n",temp);
+			/*sprintf(hashTable[i].binaryData + strlen(hashTable[i].binaryData),"%s",temp);*/
+
+
+		}
+		if (hashTable[i].data!=0 && hashTable[i].era!=0) {
+			/*sprintf(hashTable[i].binaryData + strlen(hashTable[i].binaryData),"%d",hashTable[i].addr);*/
+			temp = decimalToBinary(hashTable[i].data,2,temp,1,DATA_WIDTH);
+			printf("%s-",temp);
+			/*sprintf(hashTable[i].binaryData + strlen(hashTable[i].binaryData),"%s",temp);*/
+			temp = decimalToBinary(hashTable[i].era,2,temp,1,ERA_WIDTH);
+			printf("%s\n",temp);
+		}
+		if (hashTable[i].src_reg!=0 || hashTable[i].dest_reg!=0) {
+			/*sprintf(hashTable[i].binaryData + strlen(hashTable[i].binaryData),"%d",hashTable[i].addr);*/
+			temp = decimalToBinary(hashTable[i].src_reg,2,temp,1,SREG_WIDTH);
+			printf("0-%s-",temp);
+			temp = decimalToBinary(hashTable[i].dest_reg,2,temp,1,DREG_WIDTH);
+			printf("%s-",temp);
+			/*sprintf(hashTable[i].binaryData + strlen(hashTable[i].binaryData),"%s",temp);*/
+			temp = decimalToBinary(hashTable[i].era,2,temp,1,ERA_WIDTH);
+			printf("%s\n",temp);
+		}
+		if (hashTable[i].datanum!=0) {
+			/*sprintf(hashTable[i].binaryData + strlen(hashTable[i].binaryData),"%d",hashTable[i].addr);*/
+			temp = decimalToBinary(hashTable[i].datanum,2,temp,1,DATA_WIDTH);
+			printf("%s-",temp);
+			/*sprintf(hashTable[i].binaryData + strlen(hashTable[i].binaryData),"%s",temp);*/
+			temp = decimalToBinary(hashTable[i].era,2,temp,1,ERA_WIDTH);
+			printf("%s\n",temp);
+		}
+		if (hashTable[i].era==1 && hashTable[i].data==0) {
+			/*sprintf(hashTable[i].binaryData + strlen(hashTable[i].binaryData),"%d",hashTable[i].addr);*/
+			temp = decimalToBinary(hashTable[i].data,2,temp,1,DATA_WIDTH);
+			printf("%s-",temp);
+			/*sprintf(hashTable[i].binaryData + strlen(hashTable[i].binaryData),"%s",temp);*/
+			temp = decimalToBinary(hashTable[i].era,2,temp,1,ERA_WIDTH);
+			printf("%s\n",temp);
 		}
 	}
 }
@@ -630,6 +683,7 @@ void insertToDataTable(int opcode, int srcAddr, int destAddr, char *srcAddrValue
 
 		if (srcAddr==21) {
 			hashTable[hashTableCounter].rnd = 1;
+			hashTable[hashTableCounter].src_addr=2;
 			incHashTable();
 			srand(time(NULL));
 			int r = rand();
@@ -637,12 +691,18 @@ void insertToDataTable(int opcode, int srcAddr, int destAddr, char *srcAddrValue
 		}
 		if (destAddr==21) {
 			hashTable[hashTableCounter].rnd = 1;
+			hashTable[hashTableCounter].dest_addr=2;
 			incHashTable();
 			srand(time(NULL));
 			int r = rand();
 			hashTable[hashTableCounter].dest_reg = r;
 		}
 		if (srcAddr==22 || destAddr==22) {
+			if (srcAddr==22)
+				hashTable[hashTableCounter].src_addr=2;
+			if (destAddr==22)
+				hashTable[hashTableCounter].dest_addr=2;
+
 			hashTable[hashTableCounter].rnd = 2;
 			incHashTable();
 			srand(time(NULL));
@@ -650,6 +710,11 @@ void insertToDataTable(int opcode, int srcAddr, int destAddr, char *srcAddrValue
 			hashTable[hashTableCounter].datanum = r;
 		}
 		if (srcAddr==23 || destAddr==23) {
+			if (srcAddr==23)
+				hashTable[hashTableCounter].src_addr=2;
+			if (destAddr==23)
+				hashTable[hashTableCounter].dest_addr=2;
+
 			hashTable[hashTableCounter].rnd = 3;
 			incHashTable();
 			hashTable[hashTableCounter].era = 2;
@@ -658,6 +723,7 @@ void insertToDataTable(int opcode, int srcAddr, int destAddr, char *srcAddrValue
 
 	} else if (srcAddr==-1 && destAddr!=-1) {
 		hashTable[hashTableCounter].group = 1;
+		hashTable[hashTableCounter].dest_addr = destAddr;
 	} else if (srcAddr==-1 && destAddr==-1) {
 
 	}

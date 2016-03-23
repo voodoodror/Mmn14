@@ -12,9 +12,9 @@
 #define IC_MEM_ALLOCATION 100
 
 #define ERA_WIDTH 2
-#define DREG_WIDTH 3
+#define DREG_WIDTH 6
 #define DADDR_WIDTH 2
-#define SREG_WIDTH 3
+#define SREG_WIDTH 6
 #define SADDR_WIDTH 2
 #define OPCODE_WIDTH 4
 #define GROUP_WIDTH 2
