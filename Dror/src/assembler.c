@@ -115,9 +115,9 @@ int main(int argc, char **argv)
 			printf("DC: \"%d\"\tDATA: \"%d\"\tBINARY DATA: \"%s\"\tBASE32 DATA: \"%s\"\n",iterd->dc,iterd->data,iterd->binaryData,iterd->base32);
 
 		printf("\n\nHash Table:\n");
-		printf("IC\tERA\tDEST_REG\tDEST_ADDR\tSRC_REG\t\tSRC_ADDR\tOPCODE\tGROUP\tRND\tDATA\tDATA_NUM\tNOT_IN_USE\n");
+		printf("IC\tERA\tDEST_REG\tDEST_ADDR\tSRC_REG\t\tSRC_ADDR\tOPCODE\tGROUP\tRND\tDATA\tDATA_NUM\tNOT_IN_USE\tResult\n");
 		for (j=0; j<ic-IC_MEM_ALLOCATION; j++)
-			printf("%d\t%d\t\t%d\t\t%d\t%d\t\t%d\t\t%d\t%d\t%d\t%d\t%d\t\t%d\t\n",hashTable[j].addr,hashTable[j].era,hashTable[j].dest_reg,hashTable[j].dest_addr,hashTable[j].src_reg,hashTable[j].src_addr,hashTable[j].opcode,hashTable[j].group,hashTable[j].rnd,hashTable[j].data,hashTable[j].datanum,hashTable[j].not_in_use);
+			printf("%d\t%d\t\t%d\t\t%d\t%d\t\t%d\t\t%d\t%d\t%d\t%d\t%d\t\t%d\t\t%s\t\t%s\n",hashTable[j].addr,hashTable[j].era,hashTable[j].dest_reg,hashTable[j].dest_addr,hashTable[j].src_reg,hashTable[j].src_addr,hashTable[j].opcode,hashTable[j].group,hashTable[j].rnd,hashTable[j].data,hashTable[j].datanum,hashTable[j].not_in_use,hashTable[j].binaryData,hashTable[j].base32);
 
 		/* close all the open files
 
@@ -312,7 +312,7 @@ void second_parsing_line (char *line, int count) {
 					symbolPointer = getNextString(line+(sizeof(spaceChar)+strlen(dotCommand)+sizeof(spaceChar)));
 					symFound = findExistingSym(symbolList,symbolPointer,"entry");
 					if (symFound!=-1) {
-						fprintf(ent, "%s\t%s\n", symbolPointer, decimalToBase32(symFound,temp));
+						fprintf(ent, "%s\t%s\n", symbolPointer, decimalToBase32(symFound,PADDING_ENABLED,temp));
 						entryCounter++;
 					} else {
 						printf("ERROR: Line %d - Entry symbol does not present in symbol list.\n",count+1);
@@ -327,67 +327,88 @@ void second_parsing_line (char *line, int count) {
 			}
 	}
 }
+char* concat(char *s1, char *s2)
+{
+    size_t len1 = strlen(s1);
+    size_t len2 = strlen(s2);
+    char *result = malloc(len1+len2+1);//+1 for the zero-terminator
+    //in real code you would check for errors in malloc here
+    memcpy(result, s1, len1);
+    memcpy(result+len1, s2, len2+1);//+1 to copy the null-terminator
+    return result;
+}
 void hashTableToFile() {
 	char *temp=malloc(sizeof(char*));
+	char *base32ToHash;
+	char *stringToHash;
+	char *endp = NULL;
 	int i=0;
 	for (i=0; i<ic-IC_MEM_ALLOCATION; i++) {
 		if (hashTable[i].era==0 && (hashTable[i].src_addr!=0 || hashTable[i].dest_addr!=0 || hashTable[i].opcode!=0)) {
-			/*sprintf(hashTable[i].binaryData + strlen(hashTable[i].binaryData),"%d",hashTable[i].addr);*/
-			temp = decimalToBinary(hashTable[i].rnd,2,temp,1,RND_WIDTH);
-			printf("0-%s-",temp);
-			/*sprintf(hashTable[i].binaryData + strlen(hashTable[i].binaryData),"%s",temp);*/
-			temp = decimalToBinary(hashTable[i].group,2,temp,1,GROUP_WIDTH);
-			printf("%s-",temp);
-			/*sprintf(hashTable[i].binaryData + strlen(hashTable[i].binaryData),"%s",temp);*/
-			temp = decimalToBinary(hashTable[i].opcode,2,temp,1,OPCODE_WIDTH);
-			printf("%s-",temp);
-			/*sprintf(hashTable[i].binaryData + strlen(hashTable[i].binaryData),"%s",temp);*/
-			temp = decimalToBinary(hashTable[i].src_addr,2,temp,1,SADDR_WIDTH);
-			printf("%s-",temp);
-			/*sprintf(hashTable[i].binaryData + strlen(hashTable[i].binaryData),"%s",temp);*/
-			temp = decimalToBinary(hashTable[i].dest_addr,2,temp,1,DADDR_WIDTH);
-			printf("%s-",temp);
-			/*sprintf(hashTable[i].binaryData + strlen(hashTable[i].binaryData),"%s",temp);*/
-			temp = decimalToBinary(hashTable[i].era,2,temp,1,ERA_WIDTH);
-			printf("%s\n",temp);
-			/*sprintf(hashTable[i].binaryData + strlen(hashTable[i].binaryData),"%s",temp);*/
-
-
+			stringToHash=malloc(sizeof(char*));
+			base32ToHash=malloc(sizeof(char*));
+			temp = decimalToBinary(hashTable[i].not_in_use,2,temp,PADDING_ENABLED,NIU_WIDTH);
+			stringToHash = concat(stringToHash,temp);
+			temp = decimalToBinary(hashTable[i].rnd,2,temp,PADDING_ENABLED,RND_WIDTH);
+			stringToHash = concat(stringToHash,temp);
+			temp = decimalToBinary(hashTable[i].group,2,temp,PADDING_ENABLED,GROUP_WIDTH);
+			stringToHash = concat(stringToHash,temp);
+			temp = decimalToBinary(hashTable[i].opcode,2,temp,PADDING_ENABLED,OPCODE_WIDTH);
+			stringToHash = concat(stringToHash,temp);
+			temp = decimalToBinary(hashTable[i].src_addr,2,temp,PADDING_ENABLED,SADDR_WIDTH);
+			stringToHash = concat(stringToHash,temp);
+			temp = decimalToBinary(hashTable[i].dest_addr,2,temp,PADDING_ENABLED,DADDR_WIDTH);
+			stringToHash = concat(stringToHash,temp);
+			temp = decimalToBinary(hashTable[i].era,2,temp,PADDING_ENABLED,ERA_WIDTH);
+			stringToHash = concat(stringToHash,temp);
+			hashTable[i].binaryData = stringToHash;
+			hashTable[i].base32 = decimalToBase32(strtoul(hashTable[i].binaryData, &endp, 2),PADDING_ENABLED,base32ToHash);
 		}
 		if (hashTable[i].data!=0 && hashTable[i].era!=0) {
-			/*sprintf(hashTable[i].binaryData + strlen(hashTable[i].binaryData),"%d",hashTable[i].addr);*/
-			temp = decimalToBinary(hashTable[i].data,2,temp,1,DATA_WIDTH);
-			printf("%s-",temp);
-			/*sprintf(hashTable[i].binaryData + strlen(hashTable[i].binaryData),"%s",temp);*/
-			temp = decimalToBinary(hashTable[i].era,2,temp,1,ERA_WIDTH);
-			printf("%s\n",temp);
+			stringToHash=malloc(sizeof(char*));
+			base32ToHash=malloc(sizeof(char*));
+			temp = decimalToBinary(hashTable[i].data,2,temp,PADDING_ENABLED,DATA_WIDTH);
+			stringToHash = concat(stringToHash,temp);
+			temp = decimalToBinary(hashTable[i].era,2,temp,PADDING_ENABLED,ERA_WIDTH);
+			stringToHash = concat(stringToHash,temp);
+			hashTable[i].binaryData = stringToHash;
+			hashTable[i].base32 = decimalToBase32(strtoul(hashTable[i].binaryData, &endp, 2),PADDING_ENABLED,base32ToHash);
 		}
 		if (hashTable[i].src_reg!=0 || hashTable[i].dest_reg!=0) {
-			/*sprintf(hashTable[i].binaryData + strlen(hashTable[i].binaryData),"%d",hashTable[i].addr);*/
-			temp = decimalToBinary(hashTable[i].src_reg,2,temp,1,SREG_WIDTH);
-			printf("0-%s-",temp);
-			temp = decimalToBinary(hashTable[i].dest_reg,2,temp,1,DREG_WIDTH);
-			printf("%s-",temp);
-			/*sprintf(hashTable[i].binaryData + strlen(hashTable[i].binaryData),"%s",temp);*/
-			temp = decimalToBinary(hashTable[i].era,2,temp,1,ERA_WIDTH);
-			printf("%s\n",temp);
+			stringToHash=malloc(sizeof(char*));
+			base32ToHash=malloc(sizeof(char*));
+			temp = decimalToBinary(hashTable[i].not_in_use,2,temp,PADDING_ENABLED,NIU_WIDTH);
+			stringToHash = concat(stringToHash,temp);
+			temp = decimalToBinary(hashTable[i].src_reg,2,temp,PADDING_ENABLED,SREG_WIDTH);
+			stringToHash = concat(stringToHash,temp);
+			temp = decimalToBinary(hashTable[i].dest_reg,2,temp,PADDING_ENABLED,DREG_WIDTH);
+			stringToHash = concat(stringToHash,temp);
+			temp = decimalToBinary(hashTable[i].era,2,temp,PADDING_ENABLED,ERA_WIDTH);
+			stringToHash = concat(stringToHash,temp);
+			hashTable[i].binaryData = stringToHash;
+			hashTable[i].base32 = decimalToBase32(strtoul(hashTable[i].binaryData, &endp, 2),PADDING_ENABLED,base32ToHash);
 		}
 		if (hashTable[i].datanum!=0) {
-			/*sprintf(hashTable[i].binaryData + strlen(hashTable[i].binaryData),"%d",hashTable[i].addr);*/
-			temp = decimalToBinary(hashTable[i].datanum,2,temp,1,DATA_WIDTH);
-			printf("%s-",temp);
-			/*sprintf(hashTable[i].binaryData + strlen(hashTable[i].binaryData),"%s",temp);*/
-			temp = decimalToBinary(hashTable[i].era,2,temp,1,ERA_WIDTH);
-			printf("%s\n",temp);
+			stringToHash=malloc(sizeof(char*));
+			base32ToHash=malloc(sizeof(char*));
+			temp = decimalToBinary(hashTable[i].datanum,2,temp,PADDING_ENABLED,DATA_WIDTH);
+			stringToHash = concat(stringToHash,temp);
+			temp = decimalToBinary(hashTable[i].era,2,temp,PADDING_ENABLED,ERA_WIDTH);
+			stringToHash = concat(stringToHash,temp);
+			hashTable[i].binaryData = stringToHash;
+			hashTable[i].base32 = decimalToBase32(strtoul(hashTable[i].binaryData, &endp, 2),PADDING_ENABLED,base32ToHash);
 		}
 		if (hashTable[i].era==1 && hashTable[i].data==0) {
-			/*sprintf(hashTable[i].binaryData + strlen(hashTable[i].binaryData),"%d",hashTable[i].addr);*/
-			temp = decimalToBinary(hashTable[i].data,2,temp,1,DATA_WIDTH);
-			printf("%s-",temp);
-			/*sprintf(hashTable[i].binaryData + strlen(hashTable[i].binaryData),"%s",temp);*/
-			temp = decimalToBinary(hashTable[i].era,2,temp,1,ERA_WIDTH);
-			printf("%s\n",temp);
+			stringToHash=malloc(sizeof(char*));
+			base32ToHash=malloc(sizeof(char*));
+			temp = decimalToBinary(hashTable[i].data,2,temp,PADDING_ENABLED,DATA_WIDTH);
+			stringToHash = concat(stringToHash,temp);
+			temp = decimalToBinary(hashTable[i].era,2,temp,PADDING_ENABLED,ERA_WIDTH);
+			stringToHash = concat(stringToHash,temp);
+			hashTable[i].binaryData = stringToHash;
+			hashTable[i].base32 = decimalToBase32(strtoul(hashTable[i].binaryData, &endp, 2),PADDING_ENABLED,base32ToHash);
 		}
+
 	}
 }
 void replaceStrAddr() {
@@ -754,7 +775,7 @@ void insertToDataTable(int opcode, int srcAddr, int destAddr, char *srcAddrValue
 		}
 		if (result==0) {
 			hashTable[hashTableCounter].era = 1;
-			fprintf(ext, "%s\t%s\n", destAddrValue, decimalToBase32(icForHashTable,temp));
+			fprintf(ext, "%s\t%s\n", destAddrValue, decimalToBase32(icForHashTable,PADDING_ENABLED,temp));
 			externCounter++;
 		} else {
 			hashTable[hashTableCounter].era = 2;
@@ -771,7 +792,7 @@ void insertToDataTable(int opcode, int srcAddr, int destAddr, char *srcAddrValue
 		}
 		if (result==0) {
 			hashTable[hashTableCounter].era = 1;
-			fprintf(ext, "%s\t%s\n", destAddrValue, decimalToBase32(icForHashTable,temp));
+			fprintf(ext, "%s\t%s\n", destAddrValue, decimalToBase32(icForHashTable,PADDING_ENABLED,temp));
 			externCounter++;
 		} else {
 			hashTable[hashTableCounter].era = 2;
@@ -997,8 +1018,8 @@ myDataTable *createDataNode (int dc, int data) {
 	if (NULL != newData){
 		newData->dc = dc;
 		newData->data = data;
-		newData->binaryData = decimalToBinary(data,2,temp,1,8);
-		newData->base32 = decimalToBase32(strtoul(newData->binaryData, &endp, 2),temp2);
+		newData->binaryData = decimalToBinary(data,2,temp,PADDING_ENABLED,MAX_DIGIT);
+		newData->base32 = decimalToBase32(strtoul(newData->binaryData, &endp, 2),PADDING_ENABLED,temp2);
 		newData->next = NULL;
 	}
 	return newData;

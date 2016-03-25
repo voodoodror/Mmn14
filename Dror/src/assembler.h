@@ -22,6 +22,7 @@
 #define NIU_WIDTH 1
 #define DATA_WIDTH 13
 #define DATANUM_WIDTH 13
+#define PADDING_ENABLED 1
 
 #define COMB_OFFSET 0
 #define DREG_OFFSET 2
@@ -94,6 +95,7 @@ typedef struct hashTables {
     int datanum				: DATANUM_WIDTH;
     unsigned int not_in_use : NIU_WIDTH;
     char *binaryData;
+    char *base32;
 } myHashTable;
 
 typedef struct commandTables {
@@ -191,7 +193,7 @@ char *decimalToBinary(int num, int base, char *result, int pad, int bit_len)
         return result + bit_len - index;
     }
 }
-char *decimalToBase32 (int num, char *result) {
+char *decimalToBase32 (int num, int pad, char *result) {
 	int quotient;
 	int i=0,j,temp;
 
@@ -207,7 +209,12 @@ char *decimalToBase32 (int num, char *result) {
 		hexadecimalNumber[i++]= temp;
 		quotient = quotient / 32;
 	}
-	for (j = i ;j> 0;j--)
-		  result[i-j] = hexadecimalNumber[j-1];
+	/*if (pad) {
+		for (j=0; j<MAX_BASE32_DIGIT-i; j++);
+			hexadecimalNumber[i] = '0';
+			i++;*/
+		for (j = i ;j> 0;j--)
+			  result[i-j] = hexadecimalNumber[j-1];
+	/*}*/
 	return result;
 }
