@@ -22,7 +22,9 @@
 #define NIU_WIDTH 1
 #define DATA_WIDTH 13
 #define DATANUM_WIDTH 13
+
 #define PADDING_ENABLED 1
+#define PADDING_DISABLED 0
 
 #define COMB_OFFSET 0
 #define DREG_OFFSET 2
@@ -196,9 +198,13 @@ char *decimalToBinary(int num, int base, char *result, int pad, int bit_len)
 char *decimalToBase32 (int num, int pad, char *result) {
 	int quotient;
 	int i=0,j,temp;
-
 	char hexadecimalNumber[100] = {0};
 	quotient = num;
+	if (!quotient) {
+		while (pad && i!=MAX_BASE32_DIGIT) {
+			hexadecimalNumber[i++] = '0';
+		}
+	}
 	while(quotient!=0) {
 		temp = quotient % 32;
 		//To convert integer into character
@@ -208,13 +214,11 @@ char *decimalToBase32 (int num, int pad, char *result) {
 			temp = temp + 55;
 		hexadecimalNumber[i++]= temp;
 		quotient = quotient / 32;
+		while (pad && quotient==0 && i!=MAX_BASE32_DIGIT) {
+			hexadecimalNumber[i++] = '0';
+		}
 	}
-	/*if (pad) {
-		for (j=0; j<MAX_BASE32_DIGIT-i; j++);
-			hexadecimalNumber[i] = '0';
-			i++;*/
-		for (j = i ;j> 0;j--)
-			  result[i-j] = hexadecimalNumber[j-1];
-	/*}*/
+	for (j = i ;j> 0;j--)
+	  result[i-j] = hexadecimalNumber[j-1];
 	return result;
 }

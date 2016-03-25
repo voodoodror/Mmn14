@@ -115,7 +115,7 @@ int main(int argc, char **argv)
 			printf("DC: \"%d\"\tDATA: \"%d\"\tBINARY DATA: \"%s\"\tBASE32 DATA: \"%s\"\n",iterd->dc,iterd->data,iterd->binaryData,iterd->base32);
 
 		printf("\n\nHash Table:\n");
-		printf("IC\tERA\tDEST_REG\tDEST_ADDR\tSRC_REG\t\tSRC_ADDR\tOPCODE\tGROUP\tRND\tDATA\tDATA_NUM\tNOT_IN_USE\tResult\n");
+		printf("IC\tERA\tDEST_REG\tDEST_ADDR\tSRC_REG\t\tSRC_ADDR\tOPCODE\tGROUP\tRND\tDATA\tDATA_NUM\tNOT_IN_USE\tbinaryData\tbase32\n");
 		for (j=0; j<ic-IC_MEM_ALLOCATION; j++)
 			printf("%d\t%d\t\t%d\t\t%d\t%d\t\t%d\t\t%d\t%d\t%d\t%d\t%d\t\t%d\t\t%s\t\t%s\n",hashTable[j].addr,hashTable[j].era,hashTable[j].dest_reg,hashTable[j].dest_addr,hashTable[j].src_reg,hashTable[j].src_addr,hashTable[j].opcode,hashTable[j].group,hashTable[j].rnd,hashTable[j].data,hashTable[j].datanum,hashTable[j].not_in_use,hashTable[j].binaryData,hashTable[j].base32);
 
@@ -312,7 +312,7 @@ void second_parsing_line (char *line, int count) {
 					symbolPointer = getNextString(line+(sizeof(spaceChar)+strlen(dotCommand)+sizeof(spaceChar)));
 					symFound = findExistingSym(symbolList,symbolPointer,"entry");
 					if (symFound!=-1) {
-						fprintf(ent, "%s\t%s\n", symbolPointer, decimalToBase32(symFound,PADDING_ENABLED,temp));
+						fprintf(ent, "%s\t%s\n", symbolPointer, decimalToBase32(symFound,PADDING_DISABLED,temp));
 						entryCounter++;
 					} else {
 						printf("ERROR: Line %d - Entry symbol does not present in symbol list.\n",count+1);
@@ -410,6 +410,20 @@ void hashTableToFile() {
 		}
 
 	}
+	fprintf(obj, "\tBase 32 Address\tBase 32 machine code\n\n");
+	base32ToHash=malloc(sizeof(char*));
+	fprintf(obj, "\t\t\t\t\t\t\t%s",decimalToBase32(ic-IC_MEM_ALLOCATION,PADDING_DISABLED,base32ToHash));
+	base32ToHash=malloc(sizeof(char*));
+	fprintf(obj, "\t%s\n",decimalToBase32(dc,PADDING_DISABLED,base32ToHash));
+
+	for (i=0; i<ic-IC_MEM_ALLOCATION; i++) {
+		base32ToHash=malloc(sizeof(char*));
+		fprintf(obj, "\t\t\t\t\t\t%s\t%s\n",decimalToBase32(hashTable[i].addr,PADDING_ENABLED,base32ToHash),hashTable[i].base32);
+	}
+
+	myDataTable* iterd;
+	for (iterd = dataTable; NULL != iterd; iterd = iterd->next)
+		fprintf(obj, "\t\t\t\t\t\t%s\t%s\n",decimalToBase32(ic+iterd->dc,PADDING_ENABLED,base32ToHash),iterd->base32);
 }
 void replaceStrAddr() {
 	mySymbolList* iter;
@@ -775,7 +789,7 @@ void insertToDataTable(int opcode, int srcAddr, int destAddr, char *srcAddrValue
 		}
 		if (result==0) {
 			hashTable[hashTableCounter].era = 1;
-			fprintf(ext, "%s\t%s\n", destAddrValue, decimalToBase32(icForHashTable,PADDING_ENABLED,temp));
+			fprintf(ext, "%s\t%s\n", destAddrValue, decimalToBase32(icForHashTable,PADDING_DISABLED,temp));
 			externCounter++;
 		} else {
 			hashTable[hashTableCounter].era = 2;
@@ -792,7 +806,7 @@ void insertToDataTable(int opcode, int srcAddr, int destAddr, char *srcAddrValue
 		}
 		if (result==0) {
 			hashTable[hashTableCounter].era = 1;
-			fprintf(ext, "%s\t%s\n", destAddrValue, decimalToBase32(icForHashTable,PADDING_ENABLED,temp));
+			fprintf(ext, "%s\t%s\n", destAddrValue, decimalToBase32(icForHashTable,PADDING_DISABLED,temp));
 			externCounter++;
 		} else {
 			hashTable[hashTableCounter].era = 2;
