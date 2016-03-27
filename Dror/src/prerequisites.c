@@ -8,6 +8,7 @@
 #include "prerequisites.h"
 #include "first_parsing.h"
 #include "utils.h"
+#include "main.h"
 
 extern myCommandTable commandTable[COMMAND_SIZE];
 extern int dotLen,symbolLen, ic;

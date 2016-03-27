@@ -2,9 +2,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <time.h>
 #include "struct.h"
 #include "second_parsing.h"
 #include "prerequisites.h"
+#include "main.h"
+#include "utils.h"
 
 extern int dc, ic, errorFlag,symbolLen,externCounter,entryCounter,icForHashTable,hashTableCounter;
 extern mySymbolList *symbolList;
@@ -22,9 +25,7 @@ void second_parsing_line (char *line, int count) {
 	char *dotCommand;
 	int symFound;
 	char *temp = malloc(sizeof(char*));
-	int i=0;
 	int commandFound=-1;
-	int extractResult;
 
 
 	strip_extra_spaces(line);
@@ -33,7 +34,7 @@ void second_parsing_line (char *line, int count) {
 				if (hasDot(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar))) == NULL) {
 					dotCommand = getNextString(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar)));
 					commandFound = findCommand(dotCommand);
-					extractResult = extractSym(commandFound,2);
+					extractSym(commandFound,2);
 					incHashTable();
 				}
 			} else if (line[0] == '.'){
@@ -52,7 +53,7 @@ void second_parsing_line (char *line, int count) {
 			} else {
 				dotCommand = getNextString(line);
 				commandFound = findCommand(dotCommand);
-				extractResult = extractOperands(line+(sizeof(spaceChar)+strlen((char *)dotCommand)),commandFound,2);
+				extractOperands(line+(sizeof(spaceChar)+strlen((char *)dotCommand)),commandFound,2);
 				incHashTable();
 			}
 	}

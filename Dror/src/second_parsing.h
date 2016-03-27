@@ -1,7 +1,7 @@
 /*
  * first_parsing.h
  *
- *  Created on: 26 бошх 2016
+ *  Created on: 26 пїЅпїЅпїЅпїЅ 2016
  *      Author: Dror
  */
 
@@ -18,6 +18,9 @@ extern const char spaceChar;
 extern const char qmChar;
 extern const char newlineChar;
 extern const char commaChar;
+
+#include "struct.h"
+#include "first_parsing.h"
 
 #define extractSym(X,Y) extractOperands(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar)+sizeof(dotChar)+strlen(dotCommand)),X,Y);
 #define extractSymData(X) \

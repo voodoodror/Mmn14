@@ -6,6 +6,7 @@
 #include "prerequisites.h"
 #include "utils.h"
 #include "first_parsing.h"
+#include "main.h"
 
 extern int dc, ic, errorFlag,symbolLen,symbolCounter,count;
 extern mySymbolList *symbolList;
@@ -25,11 +26,14 @@ void first_parsing_line (char *line, int count) {
 	int extractResult;
 
 	strip_extra_spaces(line);
+	/* Checking whether line is not empty and has no comment char */
 	if (line[0] != ';' && strlen(line) != 0) {
+		/* Line should start with either dot or an alpha */
 		if (!isalpha(line[0]) && line[0] != '.') {
 			printf("ERROR: Line %d - line MUST begin with a letter or a dot.\n",count);
 			errorFlag++;
 		} else {
+			/* If it has symbol ':' char in string */
 			if (hasSymbol(line) != 0) {
 				if (hasSymbol(line+(symbolLen+sizeof(symbolChar))) != 0) {
 					printf("ERROR: Line %d - More than 1 symbol sign has been found.\n",count);

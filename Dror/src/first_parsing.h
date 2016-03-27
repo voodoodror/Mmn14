@@ -1,7 +1,7 @@
 /*
  * first_parsing.h
  *
- *  Created on: 26 бошх 2016
+ *  Created on: 26 пїЅпїЅпїЅпїЅ 2016
  *      Author: Dror
  */
 
