@@ -1,3 +1,8 @@
+/* utils.c
+ * Dror Bletter
+ * voodoodror@gmail.com
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,12 +16,15 @@ extern const char dotChar;
 extern const char qmChar;
 extern const char newlineChar;
 
+/* strip_extra_spaces Removes any extra spaces\tabs, keeps commas clean from left and right, removes new line char */
 void strip_extra_spaces(char* str) {
   int i,x;
 
+  /* Loop and replace every tab with space first */
   for(i=x=0; str[i]; ++i) {
 	  if (str[i+1] == '\t')
 	  		  str[i+1] = ' ';
+	  /* Skip if the following cases are met */
 	  if (isspace(str[i]) && !isalpha(str[i-1]) && (str[i-1] != symbolChar) && (!isdigit(str[i+1]) || !isdigit(str[i-1]) || str[i+1] =='-' || str[i-1] == qmChar))
 		  	  i++;
 	  if(!isspace(str[i]) || (i>0 && !isspace(str[i-1])))
@@ -24,6 +32,7 @@ void strip_extra_spaces(char* str) {
   }
   if (isspace(str[x]))
 	  str[x] = '\0';
+  /* Removes new line char */
   if (strchr(str,newlineChar) != NULL)
 	  str[x] = '\0';
   else
@@ -31,6 +40,9 @@ void strip_extra_spaces(char* str) {
   if (isspace(str[strlen((char *)str)-1]))
   	  str[strlen((char *)str)-1] = '\0';
 }
+
+/* decimalToBinary
+ * Receives decimal number, base, padding, required char bit length and returns binary char * */
 char *decimalToBinary(int num, int base, char *result, int pad, int bit_len)
 {
 	int negativeNumber=0,oneFound=0;
@@ -58,6 +70,7 @@ char *decimalToBinary(int num, int base, char *result, int pad, int bit_len)
 	}
     result[i] = '\0';
 
+    /* If decimal is negative number, use two complement notation */
     if(negativeNumber) {
     	i=0;
     	while (!oneFound) {
@@ -86,11 +99,13 @@ char *decimalToBinary(int num, int base, char *result, int pad, int bit_len)
         return result + bit_len - index;
     }
 }
+/* decimalToBase32 converts decimal number to Base32. The functions gets number, pad (boolean) and returns result as char * */
 char *decimalToBase32 (int num, int pad, char *result) {
 	int quotient;
 	int i=0,j,temp;
 	char hexadecimalNumber[100] = {0};
 	quotient = num;
+	/* If number is already zero, convert it anyway with zeroes */
 	if (!quotient) {
 		while (pad && i!=MAX_BASE32_DIGIT) {
 			hexadecimalNumber[i++] = '0';
@@ -105,6 +120,7 @@ char *decimalToBase32 (int num, int pad, char *result) {
 			temp = temp + 55;
 		hexadecimalNumber[i++]= temp;
 		quotient = quotient / 32;
+		/* If padding is enabled */
 		while (pad && quotient==0 && i!=MAX_BASE32_DIGIT) {
 			hexadecimalNumber[i++] = '0';
 		}
@@ -113,6 +129,7 @@ char *decimalToBase32 (int num, int pad, char *result) {
 	  result[i-j] = hexadecimalNumber[j-1];
 	return result;
 }
+/* concat Merges between two char * */
 char* concat(char *s1, char *s2)
 {
     size_t len1 = strlen(s1);
@@ -123,18 +140,21 @@ char* concat(char *s1, char *s2)
     memcpy(result+len1, s2, len2+1);//+1 to copy the null-terminator
     return result;
 }
+/* hasDot checks for existence of dot in a string. It returns the char * at the point where dot is. */
 char *hasDot(char* str) {
 	char *tmpStr;
 	tmpStr = strchr(str,dotChar);
 
 	return tmpStr;
 }
+/* hasQM checks for existence of quotation mark in a string. It returns the char * at the point where QM is. */
 char *hasQM(char* str) {
 	char *tmpStr;
 	tmpStr = strchr(str,qmChar);
 
 	return tmpStr;
 }
+/* symIsUpper checks if a string is UPPERCASE */
 int symIsUpper(char* str) {
 	char *myStr = malloc(sizeof(char*));
 	memcpy(myStr,str,(size_t) sizeof(str));

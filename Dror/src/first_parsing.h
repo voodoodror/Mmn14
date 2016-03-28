@@ -1,12 +1,14 @@
-/*
- * first_parsing.h
- *
- *  Created on: 26 ���� 2016
- *      Author: Dror
+/* first_parsing.h
+ * Dror Bletter
+ * voodoodror@gmail.com
  */
 
 #ifndef FIRST_PARSING_H_
 #define FIRST_PARSING_H_
+#define REGISTER_MIN 0
+#define REGISTER_MAX 7
+#define UPPERCASE_A 65
+#define UPPERCASE_Z 90
 
 void first_parsing_line (char *line, int count);
 int extractData(char *str, char *type);

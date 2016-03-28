@@ -1,8 +1,6 @@
-/*
- * utils.h
- *
- *  Created on: 26 במרץ 2016
- *      Author: Dror
+/* utils.h
+ * Dror Bletter
+ * voodoodror@gmail.com
  */
 
 #ifndef UTILS_H_

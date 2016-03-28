@@ -1,12 +1,12 @@
-/*
- * first_parsing.h
- *
- *  Created on: 26 ���� 2016
- *      Author: Dror
+/* second_parsing.h
+ * Dror Bletter
+ * voodoodror@gmail.com
  */
 
 #ifndef SECOND_PARSING_H_
 #define SECOND_PARSING_H_
+
+#include "first_parsing.h"
 
 void second_parsing_line (char *line, int count);
 void hashTableToFile();
@@ -20,25 +20,7 @@ extern const char newlineChar;
 extern const char commaChar;
 
 #include "struct.h"
-#include "first_parsing.h"
 
-#define extractSym(X,Y) extractOperands(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar)+sizeof(dotChar)+strlen(dotCommand)),X,Y);
-#define extractSymData(X) \
-		extractData(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar)+sizeof(dotChar)+strlen(dotCommand)+sizeof(spaceChar)),X);\
-		if (extractResult) {\
-			if (symbolCounter == 0)\
-				symbolList = createSymbolNode(symbolPointer,tmp,0,0);\
-			else\
-				symbolList = addSymbolNode(symbolList,symbolPointer,tmp,0,0);\
-			symbolCounter++;\
-		}
-#define reverseDigits() \
-		memcpy(&tmp,&addressingSrc[i-2],sizeof(int));\
-		memcpy(&addressingSrc[i-2],&addressingSrc[i-1],sizeof(int));\
-		memcpy(&addressingSrc[i-1],&tmp,sizeof(int));\
-		memcpy(&tmp,&addressingDest[j-2],sizeof(int));\
-		memcpy(&addressingDest[j-2],&addressingDest[j-1],sizeof(int));\
-		memcpy(&addressingDest[j-1],&tmp,sizeof(int));
 #define incHashTable() \
 		hashTable[hashTableCounter++].addr = icForHashTable++;
 

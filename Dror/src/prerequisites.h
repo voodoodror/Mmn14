@@ -1,8 +1,6 @@
-/*
- * prerequisites.h
- *
- *  Created on: 26 במרץ 2016
- *      Author: Dror
+/* prerequisites.h
+ * Dror Bletter
+ * voodoodror@gmail.com
  */
 
 #ifndef PREREQUISITES_H_

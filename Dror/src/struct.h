@@ -1,8 +1,6 @@
-/*
- * struct.h
- *
- *  Created on: 26 במרץ 2016
- *      Author: Dror
+/* struct.h
+ * Dror Bletter
+ * voodoodror@gmail.com
  */
 
 #ifndef STRUCT_H_
@@ -31,6 +29,7 @@
 #define PADDING_DISABLED 0
 #define COMMAND_SIZE 16
 
+/* Stores symbol data */
 typedef struct symbolLists {
 	char *Sym;
 	unsigned int addr;
@@ -39,6 +38,7 @@ typedef struct symbolLists {
 	struct symbolLists* next;
 } mySymbolList;
 
+/* Will store all the information received from file at the 2nd parsing */
 typedef struct hashTables {
 	int addr;
     unsigned int era        : ERA_WIDTH;
@@ -56,6 +56,7 @@ typedef struct hashTables {
     char *base32;
 } myHashTable;
 
+/* Stores string\data */
 typedef struct dataTables {
 	int dc;
 	int data;
@@ -64,6 +65,7 @@ typedef struct dataTables {
 	struct dataTables* next;
 } myDataTable;
 
+/* Command table structure, will be used to validate (as a first check) if opcode is valid with src\dest operand(s) or not. */
 typedef struct commandTables {
 	char *command;
 	int opcode;

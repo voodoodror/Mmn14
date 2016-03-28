@@ -1,3 +1,8 @@
+/* first_parsing.c
+ * Dror Bletter
+ * voodoodror@gmail.com
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,6 +20,7 @@ extern myCommandTable commandTable[COMMAND_SIZE];
 extern int addressingTable[82];
 extern const char symbolChar;
 extern const char dotChar;
+extern const char qmChar;
 extern const char spaceChar;
 extern const char commaChar;
 
@@ -25,6 +31,7 @@ void first_parsing_line (char *line, int count) {
 	char *dotCommand;
 	int extractResult;
 
+	/* Strips extra spaces, tabs */
 	strip_extra_spaces(line);
 	/* Checking whether line is not empty and has no comment char */
 	if (line[0] != ';' && strlen(line) != 0) {
@@ -146,64 +153,102 @@ void first_parsing_line (char *line, int count) {
 		}
 	}
 }
+/* extractData receives string and instruction line type (string\data), validates that they're valid and has no other undesirable\extra chars */
 int extractData(char *str, char *type) {
 
+	/* Initializes char array with buffer size, it will be used with strcpy */
 	char rwString[BUF_SIZE];
+	/* rwPointer Will be used as string to delimit to token */
 	char *rwPointer;
+	/* Copies string to rwString, will be used later to re-copy string to str */
 	strcpy(rwString,str);
 	char *token;
 	int num;
 
+	/* *************
+	 * VERIFICATIONS
+	 * *************/
+
 	rwPointer = rwString;
+	/* If data is empty */
 	if (str == NULL) {
 		printf("ERROR: Line %d - No data has been found in string.\n",count);
 		errorFlag++;
+		/* return 0 => no ic will be increased */
 		return 0;
 	}
+	/* Data type */
 	if (strcmp(type,"data") == 0) {
 
-		token = strsep(&rwPointer,",");
+		/* Extracts token from string and checks if it has no data */
+		token = strsep(&rwPointer,commaChar);
 		if (token == NULL) {
 			printf("ERROR: Line %d - Error occurred while trying to parse data field.\n1. Please make sure you don\'t have comma at the beginning or end of the string.\n2. Don't put 2 commas side by side.\n",count);
 			errorFlag++;
 			return 0;
 		}
+
+		/* While loop to validate that there aren't any other type than numbers. Also checks for empty data. */
 		while (token != NULL) {
 			if ((strlen(token)<=1) && (!isdigit(token[0]))) {
 				printf("ERROR: Line %d - Empty or invalid char found.\n",count);
 				errorFlag++;
 				return 0;
 			}
-			token = strsep(&rwPointer,",");
+			/* Check next operand after , char */
+			token = strsep(&rwPointer,commaChar);
 		}
+
+		/* *************
+		 * EXTRACT DATA
+		 * *************/
+
+		/* Restores original string back to rwString for parsing */
 		strcpy(rwString,str);
 		rwPointer = rwString;
-		token = strsep(&rwPointer,",");
+		token = strsep(&rwPointer,commaChar);
 
+		/* Loop until no more tokens are found */
 		while (token != NULL) {
+			/* Convert number from char to integer */
 			num = atoi(token);
+			/* Insert to Data Table */
 			if (dc == 0) {
 				dataTable = createDataNode(dc++,num);
 			} else {
 				dataTable = addDataNode(dataTable,dc++,num);
 			}
 
-			token = strsep(&rwPointer,",");
+			token = strsep(&rwPointer,commaChar);
 		}
+		/* Return successfully done parsing */
 		return 1;
 
+		/* String type */
 		} else if (strcmp(type,"string") == 0) {
+			/* Will be used to count how many Quotation marks (QM) has been found */
 			int qmFound=0;
 			token = str;
+			/* Verifies that first letter is QM */
+			if (strcmp(str[0],qmChar) != 0) {
+				printf("ERROR: Line %d - String must begin with quotation mark!\n",count);
+				errorFlag++;
+				return 0;
+			}
+			/* Counts the number of QM in string (should be 2 exactly) */
 			while (token != NULL) {
 				token = hasQM(token+1);
 				qmFound++;
 			}
+			/* If exactly 2 QM are found */
 			if (qmFound==2) {
+				/* Strip first QM */
 				str = str+1;
 
+				/* Strip last QM */
 				str[strlen(str)-1] = '\0';
 
+				/* Adds the char to Data Table */
 				while (str[0]!='\0') {
 					if (dc == 0) {
 						dataTable = createDataNode(dc++,(int)str[0]);
@@ -213,12 +258,17 @@ int extractData(char *str, char *type) {
 						str++;
 					}
 				}
+				/* Adds null char to the end of string */
 				dataTable = addDataNode(dataTable,dc++,0);
+
+				/* Successfully added the Data instruction line! */
 				return 1;
+			/* More than 2 QM has been found... Not good! */
 			} else if (qmFound<=2) {
 				printf("ERROR: Line %d - No quotation marks found for string!\n",count);
 				errorFlag++;
 				return 0;
+			/* Less than 2 QM has been found... Not good! */
 			} else if (qmFound>2) {
 				printf("ERROR: Line %d - More than 1 quotation mark has been found!\n",count);
 				errorFlag++;
@@ -227,25 +277,56 @@ int extractData(char *str, char *type) {
 		}
 	return 0;
 }
+
+/* extractOperands receives string with the operands, opcode as decimal number and phase (1st parsing or 2nd parsing).
+ * If the function proceed successfully - it returns the number of IC to increase. If not, it returns 0. */
 int extractOperands(char *str, int opcode, int phase) {
+
+	/* Initializes char array with buffer size, it will be used with strcpy */
 	char rwString[BUF_SIZE];
+	/* rwPointer Will be used as string to delimit to token */
 	char *rwPointer;
+	/* Copies string to rwString, will be used later to re-copy string to str */
 	strcpy(rwString,str);
+
+	/* token will be used to extract operands using comma delimiter
+	 * srcAddrValue means the value that's passed from source. i.e. mov A,B => A is the srcAddr value.
+	 * destAddrValue means the value that's passed to destination. i.e. mov A,B => B is the destAddr value.
+	 */
 	char *token, *srcAddrValue, *destAddrValue;
+
+	 /* srcAddr is the addressing type of the source operand. Can be 0/1/2/23/3. If opcode doesn't have srcAddr to be assigned, it will remain -1.
+	 *  destAddr is the addressing type of the destination operand. Can be 0/1/2/23/3.
+	 *  noOperands is a boolean which will be used in case that the opcode has no operands at all.
+	 *  singleOperand is a boolean which will be used in case that the opcode has only destination operand.
+	 *  validateSuccess is IC number received by validOperOpcode in case that it passed the required tests.
+	 */
 	int i=0,singleOperand=0,noOperands=0,srcAddr=-1,destAddr=-1,validateSuccess=0;
 	rwPointer = rwString;
 
+	/* *************
+	 * VERIFICATIONS
+	 * *************/
+
+	/* Extracts the 1st operand using comma delimiter */
 	token = strchr(str,commaChar);
+	/* The opcode is like one of the below... (no operands at all) */
 	if (opcode==14 || opcode==15) {
+		/* If operand is found anyway... Error! */
 		if (token!=NULL) {
 			printf("ERROR: Line %d - You can't use operands with this command!\n",count);
 			errorFlag++;
 			return 0;
 		}
+		/* noOperands flag is active */
 		noOperands=1;
 	}
+
+	/* Only 1 operand is found AND noOperands is false */
 	if (token == NULL && !noOperands) {
+		/* Checks that string wasn't empty before the extraction. Also checks that the opcode has only destination addressing. */
 		if (str != NULL && commandTable[opcode].srcOperations==0 && commandTable[opcode].destOperations==1) {
+			/* singleOperand flag is active */
 			singleOperand=1;
 		} else {
 			printf("ERROR: Line %d - Invalid addressing for this operand.\n",count);
@@ -253,37 +334,54 @@ int extractOperands(char *str, int opcode, int phase) {
 			return 0;
 		}
 	}
+	/* Checks for 2nd Operands */
+	token = strsep(&rwPointer,commaChar);
 
-	token = strsep(&rwPointer,",");
-
+	/* Checks for overall comma count, increases i each time comma is present*/
 	while (token != NULL && !singleOperand && !noOperands) {
+		/* Checks for empty content after comma */
 		if (strcmp(token,"\0")==0) {
 			printf("ERROR: Line %d - Empty or invalid operand has been found.\n",count);
 			errorFlag++;
 			return 0;
 		}
-		token = strsep(&rwPointer,",");
+		token = strsep(&rwPointer,commaChar);
 		i++;
 	}
+
+	/* *************
+	 * EXTRACT DATA
+	 * *************/
+
+	/* PROCEED IF => 2 operands found exactly (1 comma), neither single operand or no operands at all. */
 	if (i==2 && !singleOperand && !noOperands) {
+		/* Re-copies string back to rwString after successful validation */
 		strcpy(rwString,str);
 		rwPointer = rwString;
 
-		token = strsep(&rwPointer,",");
+		/* Extract 1st operand and place it's value in srcAddrValue */
+		token = strsep(&rwPointer,commaChar);
 		srcAddrValue = token;
+		/* Sends the value for recognition */
 		srcAddr = recognizeOperand(token);
 
-		token = strsep(&rwPointer,",");
+		/* Extract 2nd operand and place it's value in destAddrValue */
+		token = strsep(&rwPointer,commaChar);
 		destAddrValue = token;
+		/* Sends the value for recognition */
 		destAddr = recognizeOperand(token);
 
+		/* If both operands are recognized, proceed to check if the addressing is validate for this specific opcode and operands */
 		if (srcAddr!=-1 && destAddr!=-1) {
+			/* For phase 2, inserts the following variables to Data Table */
 			if (phase==2) {
 				insertToDataTable(opcode,srcAddr,destAddr,srcAddrValue,destAddrValue);
 				return 2;
 			} else {
+				/* Check if the addressing is validate for this specific opcode and operands. Result is saved to validateSuccess. */
 				validateSuccess=validOperOpcode(opcode,srcAddr,destAddr);
 			}
+			/* In case that addressing has passed, it returns the number of IC needed*/
 			if(validateSuccess!=0) {
 				return validateSuccess;
 			} else {
@@ -294,16 +392,22 @@ int extractOperands(char *str, int opcode, int phase) {
 		}
 		return 1;
 
+	/* Dealing with singleOperand */
 	} else if (singleOperand) {
+		/* Value is being saved to destAddrValue */
 		destAddrValue = token;
+		/* Recognizes the operand type */
 		destAddr = recognizeOperand(token);
 		if (destAddr!=-1) {
+			/* For phase 2, inserts the following variables to Data Table */
 			if (phase==2) {
 				insertToDataTable(opcode,-1,destAddr,NULL,destAddrValue);
 				return 2;
 			} else {
+				/* Check if the addressing is validate for this specific opcode and operands. Result is saved to validateSuccess. */
 				validateSuccess=validOperOpcode(opcode,-1,destAddr);
 			}
+			/* In case that addressing has passed, it returns the number of IC needed*/
 			if (validateSuccess!=0) {
 				return validateSuccess;
 			} else {
@@ -313,10 +417,13 @@ int extractOperands(char *str, int opcode, int phase) {
 			}
 		}
 		return 0;
+		/* Dealing with no operands */
 	} else if (noOperands) {
+		/* For phase 2, inserts the following variables to Data Table */
 		if (phase==2) {
 			insertToDataTable(opcode,-1,-1,NULL,NULL);
 		}
+		/* 1 IC is returned */
 		return 1;
 	} else {
 		printf("ERROR: Line %d - Do not place 2 commas side by side\n2. Please make sure you do not exceed 2 operands limit.\n",count);
@@ -324,15 +431,20 @@ int extractOperands(char *str, int opcode, int phase) {
 		return 0;
 	}
 }
+/* recognizeOperand receives a string and parses to type. It returns 0/1/21/22/23/3 **OR** -1 if invalid operand value found */
 int recognizeOperand(char *str) {
 	unsigned int tempNum;
 	int invalidResult=-1;
 
+	/* If it's register */
 	if (str[0] == 'r') {
+		/* Has 2 chars exactly as it should... */
 		if (strlen(str)==2) {
 			str=str+1;
+			/* Converts char to integer */
 			tempNum = atoi(str);
-			if (tempNum>=0 && tempNum<=7) {
+			/* Register number is between 0-7 */
+			if (tempNum>=REGISTER_MIN && tempNum<=REGISTER_MAX) {
 				return 3;
 			} else {
 				printf("ERROR: Line %d - Invalid register number in addressing.\n",count);
@@ -344,10 +456,14 @@ int recognizeOperand(char *str) {
 			errorFlag++;
 			return invalidResult;
 		}
+	/* Starts with #, means an integer... */
 	} else if (str[0] == '#') {
+		/* If it's negative number */
 		if (str[1] == '-') {
+			/* Skip # and - */
 			str = str+2;
 			tempNum = atoi(str);
+			/* Lowest negative number that can be achieved using two's complement negative notation */
 			if (tempNum<=16384 && tempNum>0) {
 				return 0;
 			} else {
@@ -356,8 +472,10 @@ int recognizeOperand(char *str) {
 				return invalidResult;
 			}
 		} else {
+			/* Skip # and - */
 			str = str+2;
 			tempNum = atoi(str);
+			/* Highest number that can be achieved using two's complement negative notation */
 			if (tempNum<=16383 && tempNum>0) {
 				return 0;
 			} else {
@@ -366,15 +484,19 @@ int recognizeOperand(char *str) {
 				return invalidResult;
 			}
 		}
+		/* Random register */
 	} else if (strcmp(str,"*")==0) {
 		return 21;
+		/* Random number */
 	} else if (strcmp(str,"**")==0) {
 		return 22;
+		/* Random symbol (not external) */
 	} else if (strcmp(str,"***")==0) {
 		return 23;
 	} else {
+		/* Checks that symbol has UPPERCASE chars only */
 		while (strlen(str)!=0) {
-			if (str[0]>=65 && str[0]<=90)
+			if (str[0]>=UPPERCASE_A && str[0]<=UPPERCASE_Z)
 				return 1;
 			str=str+1;
 		}
@@ -383,14 +505,28 @@ int recognizeOperand(char *str) {
 		return invalidResult;
 	}
 }
+/* General Background:
+ * -------------------
+ *
+ * Addressing Table uses the following method to validate opcode's addressing rules according to the table in page 29:
+ * 1 - Always present (in order the preserve 0 digits at the beginning)
+ * 0-15 - Opcode
+ * 0/1 - Source\Destination
+ * 0/1/2/23/3 (2 with 3 asterisk) - Addressing
+ *
+ * Any addressing that's not in table is considered invalid.
+ */
 int validOperOpcode(int opcode, int srcAddr, int destAddr) {
 	int i=0, j=0, x=0, numSrc=0, numDest=0, foundSrc=0, foundDest=0;
+
+	/* Calculates the size of addressingTable (15) */
 	int addressingTableLen = sizeof(addressingTable)/sizeof(addressingTable[0]);
 	char addressingSrc[6] = { 0 };
 	char addressingDest[6] = { 0 };
 	int digit;
 	int tmp=0;
 
+	/* First digit in every addressTable entry is always 1 */
 	addressingSrc[i++]=1, addressingDest[j++]=1;
 
 	if (opcode>9) {
@@ -408,6 +544,7 @@ int validOperOpcode(int opcode, int srcAddr, int destAddr) {
 
 	addressingSrc[i++]=0, addressingDest[j++]=1;
 
+	/* Two operands are received */
 	if (srcAddr!=-1 && destAddr!=-1) {
 		if (srcAddr>9) {
 			for (x=0; x<2; x++) {
@@ -435,6 +572,7 @@ int validOperOpcode(int opcode, int srcAddr, int destAddr) {
 		for (x = 0; x < j; x++)
 			numDest = 10 * numDest + addressingDest[x];
 
+		/* Looking for the number in addressTable */
 		for (i=0; i<=addressingTableLen; i++) {
 			if (addressingTable[i]==numSrc)
 				foundSrc=1;

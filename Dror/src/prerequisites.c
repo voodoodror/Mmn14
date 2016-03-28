@@ -1,3 +1,8 @@
+/* prerequisites.c
+ * Dror Bletter
+ * voodoodror@gmail.com
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,6 +25,7 @@ const char qmChar = '\"';
 const char newlineChar = '\n';
 const char commaChar = 44; /* , char */
 
+/* Strips the extension (AS) of the file and returns the string without it */
 char *parseProjectName(char* project) {
 	char *dotPos = strchr(project, dotChar);
 	char *projectName = malloc(sizeof(char*));
@@ -32,6 +38,7 @@ char *parseProjectName(char* project) {
 	projectName[projectNameLen] = '\0';
 	return projectName;
 }
+/* Initialize command table */
 void init_command_table() {
 	commandTable[0].command = "mov",commandTable[0].srcOperations=1,commandTable[0].destOperations=1;
 	commandTable[1].command = "cmp",commandTable[1].srcOperations=1,commandTable[1].destOperations=1;
@@ -50,6 +57,7 @@ void init_command_table() {
 	commandTable[14].command = "rts",commandTable[14].srcOperations=0,commandTable[14].destOperations=0;
 	commandTable[15].command = "stop",commandTable[15].srcOperations=0,commandTable[15].destOperations=0;
 }
+/* Replace DC with IC+DC */
 void replaceStrAddr() {
 	mySymbolList* iter;
 	for (iter = symbolList; NULL != iter; iter = iter->next) {
@@ -58,6 +66,7 @@ void replaceStrAddr() {
 		}
 	}
 }
+/* Lookup for existing symbol in list */
 int findExistingSym(mySymbolList *symbolList,char *sym, char *type) {
 	mySymbolList* iter;
 	int totalSym=0,i=0,numberFound=0;
@@ -81,14 +90,17 @@ int findExistingSym(mySymbolList *symbolList,char *sym, char *type) {
 		}
 		totalSym++;
 	}
+	/* findExistingSym is also used a random symbol when it gets "random" type */
 	if (strcmp(type,"random")==0) {
 		while (!numberFound) {
 			srand(time(NULL));
+			/* Selects a random number out of total symbols count */
 			int r = ( rand() % totalSym ) + 1;
 			iter = symbolList;
 			for (i=0; i<r; i++) {
 				iter = iter->next;
 			}
+			/* Retry if symbol is external */
 			if (iter->ext==0) {
 				return iter->addr;
 			}
@@ -96,6 +108,7 @@ int findExistingSym(mySymbolList *symbolList,char *sym, char *type) {
 	}
 	return 0;
 }
+/* Searching for command in command table */
 int findCommand(char *command) {
 	int i=0;
 	while (i<COMMAND_SIZE) {
@@ -106,6 +119,7 @@ int findCommand(char *command) {
 	}
 	return -1;
 }
+/* hasSymbol checks for existence of ':' in a string. It returns the char * at the point where ':' is. */
 int hasSymbol(char* str) {
 	char *symbolPos = strchr(str, symbolChar);
 	int tmpLen;
@@ -119,6 +133,7 @@ int hasSymbol(char* str) {
 	symbolLen=tmpLen;
 	return tmpLen;
 }
+/* getNextString checks for existence of SPACE in a string. It returns the char * at the point where SPACE is. */
 char *getNextString(char* str) {
 	char *dotPos = strchr(str, spaceChar);
 	char *tmp = malloc(sizeof(str));
@@ -135,6 +150,7 @@ char *getNextString(char* str) {
 	tmp[dotLen] = '\0';
 	return tmp;
 }
+/* getSymbol returns 'str' in 'pos' position */
 char *getSymbol(char* str, int pos) {
 	char *myStr = malloc(sizeof(char*));
 	memcpy(myStr,str,pos);
