@@ -3,9 +3,8 @@
 #include <string.h>
 #include <ctype.h>
 #include <time.h>
-
-#include "struct.h"
 #include "prerequisites.h"
+#include "struct.h"
 #include "first_parsing.h"
 #include "utils.h"
 #include "main.h"

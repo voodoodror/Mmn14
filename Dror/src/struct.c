@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "second_parsing.h"
 #include "struct.h"
+#include "second_parsing.h"
 #include "main.h"
 #include "prerequisites.h"
 #include "utils.h"

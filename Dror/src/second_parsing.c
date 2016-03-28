@@ -3,8 +3,8 @@
 #include <string.h>
 #include <ctype.h>
 #include <time.h>
-#include "struct.h"
 #include "second_parsing.h"
+#include "struct.h"
 #include "prerequisites.h"
 #include "main.h"
 #include "utils.h"

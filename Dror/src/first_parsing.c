@@ -2,10 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include "first_parsing.h"
 #include "struct.h"
 #include "prerequisites.h"
 #include "utils.h"
-#include "first_parsing.h"
 #include "main.h"
 
 extern int dc, ic, errorFlag,symbolLen,symbolCounter,count;
@@ -33,41 +33,55 @@ void first_parsing_line (char *line, int count) {
 			printf("ERROR: Line %d - line MUST begin with a letter or a dot.\n",count);
 			errorFlag++;
 		} else {
-			/* If it has symbol ':' char in string */
+			/* Check if it has symbol ':' char in string */
 			if (hasSymbol(line) != 0) {
+				/* Looking for more than ':' chars in string*/
 				if (hasSymbol(line+(symbolLen+sizeof(symbolChar))) != 0) {
 					printf("ERROR: Line %d - More than 1 symbol sign has been found.\n",count);
 					errorFlag++;
+					/* Symbol must be consist of UPPERCASE only */
 				} else if (!symIsUpper(getSymbol(line,hasSymbol(line)))) {
 					printf("ERROR: Line %d - Symbol has other chars than UPPERCASE.\n",count);
 					errorFlag++;
 				} else {
+					/* Checking if other symbols were already added to list, if so - then it checks for duplication */
 					if (symbolCounter!=0) {
 						symbolPointer = getSymbol(line,hasSymbol(line));
 						dupSymbol = findExistingSym(symbolList,symbolPointer,"symbol");
 					}
 					if (!dupSymbol) {
+						/* Checking if there's dot after symbol */
 						if (hasDot(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar))) != NULL) {
 							symbolPointer = getSymbol(line,hasSymbol(line));
+							/* Isolating the instruction line, to check whether it's string\data or other invalid data */
 							dotCommand = getNextString(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar)+sizeof(dotChar)));
 							if (strcmp(dotCommand,"string") == 0) {
+								/* Save DC's value before incremental */
 								tmp = dc;
+								/* Send the data to Macro extractSymData as string and checks if the values are valid */
 								extractResult = extractSymData("string");
 							} else if (strcmp(dotCommand,"data") == 0) {
+								/* Save DC's value before incremental */
 								tmp = dc;
+								/* Send the data to Macro extractSymData as string and checks if the values are valid */
 								extractResult = extractSymData("data");
 							} else {
 								printf("ERROR: Line %d - Instruction line doesn't exist. Make you write everything in lowercase.\n",count);
 								errorFlag++;
 							}
 						} else {
+							/* Symbol has been found, but no ".string" or ".data" present. Checking what's the command that comes after... */
 							dotCommand = getNextString(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar)));
+							/* Take the command and verify it's existence in Command Table. If it's valid, it returns it's opcode number in decimal. */
 							commandFound = findCommand(dotCommand);
 							if (commandFound!=-1) {
+								/* Sends the opcode number in decimal to extractSym for further processing. 1 means first parsing phase. */
 								extractResult = extractSym(commandFound,1);
 								if (extractResult) {
+									/* Returns the amount of ic needed for this line */
 									ic+=extractResult;
 									symbolPointer = getSymbol(line,hasSymbol(line));
+									/* Checks whether it's first symbol or not */
 									if (symbolCounter == 0)
 										symbolList = createSymbolNode(symbolPointer,ic-extractResult,0,1);
 									else
@@ -77,7 +91,7 @@ void first_parsing_line (char *line, int count) {
 									 * printf("%d: %s (\"%s\")\n",count,line,dotCommand);*/
 								}
 							} else {
-								printf("ERROR: Line %d - Command doesn't exist.\n",count);
+								printf("ERROR: Line %d - Opcode doesn't exist.\n",count);
 								errorFlag++;
 							}
 						}
@@ -86,6 +100,7 @@ void first_parsing_line (char *line, int count) {
 						errorFlag++;
 					}
 				}
+				/* Check whether it has a dot but it belongs to extern or entry */
 			} else if (line[0] == '.'){
 				dotCommand = getNextString(line+sizeof(dotChar));
 				if (strcmp(dotCommand,"entry") == 0) {
@@ -111,16 +126,20 @@ void first_parsing_line (char *line, int count) {
 					errorFlag++;
 				}
 			} else {
+				/* If it doesn't have symbol AND dot, then it must be just a usual command */
 				dotCommand = getNextString(line);
+				/* Looking for command in command table. Returns opcode number in decimal if valid. */
 				commandFound = findCommand(dotCommand);
 				if (commandFound!=-1) {
+					/* Parsing the opcode number along with it's values */
 					extractResult = extractOperands(line+(sizeof(spaceChar)+strlen((char *)dotCommand)),commandFound,1);
 					if (extractResult)
 						/* DEBUG
 						printf("%d: %s command found: (\"%s\")\n",count,line,dotCommand); */
+						/* Returns the amount of ic needed for this line */
 						ic+=extractResult;
 				} else {
-					printf("ERROR: Line %d - Command doesn't exist.\n",count);
+					printf("ERROR: Line %d - Opcode doesn't exist.\n",count);
 					errorFlag++;
 				}
 			}
