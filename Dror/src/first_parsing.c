@@ -529,33 +529,42 @@ int validOperOpcode(int opcode, int srcAddr, int destAddr) {
 	/* First digit in every addressTable entry is always 1 */
 	addressingSrc[i++]=1, addressingDest[j++]=1;
 
+	/* If opcode consists from 2 digits, split it */
 	if (opcode>9) {
+		/* Splits digits */
 		for (x=0; x<2; x++) {
 			digit = opcode % 10;
 			opcode /=10;
 			addressingSrc[i++] = digit;
 			addressingDest[j++] = digit;
 		}
+		/* Macro that replaces 2 digits with each other */
 		reverseDigits();
 	} else {
+		/* opcode is 1 digit */
 		addressingSrc[i++] = opcode;
 		addressingDest[j++] = opcode;
 	}
-
+	/* Add 0 for source and 1 for destination */
 	addressingSrc[i++]=0, addressingDest[j++]=1;
 
 	/* Two operands are received */
 	if (srcAddr!=-1 && destAddr!=-1) {
+		/* If source operand is bigger than 9 => Can be 23 (random with 3 asterisks) */
 		if (srcAddr>9) {
+			/* Splits digits */
 			for (x=0; x<2; x++) {
 				digit = srcAddr % 10;
 				srcAddr /=10;
 				addressingSrc[i++] = digit;
 			}
+			/* Macro that replaces 2 digits with each other */
 			reverseDigits();
 		} else {
+			/* srcAddr is 1 digit exactly */
 			addressingSrc[i++] = srcAddr;
 		}
+		/* If destination operand is bigger than 9 => Can be 23 (random with 3 asterisks) */
 		if (destAddr>9) {
 			for (x=0; x<2; x++) {
 				digit = destAddr % 10;
@@ -564,20 +573,23 @@ int validOperOpcode(int opcode, int srcAddr, int destAddr) {
 			}
 			reverseDigits();
 		} else {
+			/* destAddr is 1 digit exactly */
 			addressingDest[j++] = destAddr;
 		}
 
+		/* Sums back to decimal number all the results and searches in addressingTable */
 		for (x = 0; x < i; x++)
 			numSrc = 10 * numSrc + addressingSrc[x];
 		for (x = 0; x < j; x++)
 			numDest = 10 * numDest + addressingDest[x];
 
-		/* Looking for the number in addressTable */
+		/* Looking both source and destination operands in addressTable */
 		for (i=0; i<=addressingTableLen; i++) {
 			if (addressingTable[i]==numSrc)
 				foundSrc=1;
 			if (addressingTable[i]==numDest)
 				foundDest=1;
+			/* Number has been found in addressingTable! Returns success... */
 			if (foundSrc && foundDest) {
 				if (srcAddr==3 && destAddr==3) {
 					return 2;
@@ -585,22 +597,29 @@ int validOperOpcode(int opcode, int srcAddr, int destAddr) {
 				return 3;
 			}
 		}
+	/* If there's only 1 operand */
 	} else if (srcAddr==-1 && destAddr!=-1) {
+		/* If destination operand is bigger than 9 => Can be 23 (random with 3 asterisks) */
 		if (destAddr>9) {
 			for (x=0; x<2; x++) {
 				digit = destAddr % 10;
 				destAddr /=10;
 				addressingDest[j++] = digit;
 			}
+			/* Macro that replaces 2 digits with each other */
 			reverseDigits();
 		} else {
+			/* destAddr is 1 digit exactly */
 			addressingDest[j++] = destAddr;
 		}
+		/* Sums back to decimal number all the results and searches in addressingTable */
 		for (x = 0; x < j; x++)
 			numDest = 10 * numDest + addressingDest[x];
+		/* Looking for destination operand in addressTable */
 		for (i=0; i<=addressingTableLen; i++) {
 			if (addressingTable[i]==numDest)
 				foundDest=1;
+			/* Number has been found in addressingTable! Returns success... */
 			if (foundDest)
 				return 2;
 		}

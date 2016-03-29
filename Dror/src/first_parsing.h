@@ -40,6 +40,7 @@ int validOperOpcode(int opcode, int srcAddr, int destAddr);
 			symbolCounter++;\
 		}
 
+/* reverseDigits used in validOperOpcode to replace the place of the digits with each other */
 #define reverseDigits() \
 		memcpy(&tmp,&addressingSrc[i-2],sizeof(int));\
 		memcpy(&addressingSrc[i-2],&addressingSrc[i-1],sizeof(int));\
