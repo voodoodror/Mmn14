@@ -16,14 +16,12 @@ int extractOperands(char *str, int opcode, int phase);
 int recognizeOperand(char *str);
 int validOperOpcode(int opcode, int srcAddr, int destAddr);
 
-#include "struct.h"
-
 /* extractSym Macro
  * ----------------
  * Receives the opcode number in decimal and the phase of the parsing (1st parse or 2nd parse).
  * Send both along with opcode values to extractOperands for further parsing and validation.
  */
-#define extractSym(X,Y) extractOperands(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar)+sizeof(dotChar)+strlen(dotCommand)),X,Y);
+#define extractSym(X,Y) extractOperands(line+(symbolLen+strlen(symbolChar)+strlen(spaceChar)+strlen(dotChar)+strlen(dotCommand)),X,Y);
 
 /* extractSymData Macro
  * --------------------
@@ -31,7 +29,7 @@ int validOperOpcode(int opcode, int srcAddr, int destAddr);
  * If extractData returns 1, then the data is considered valid and being added to Symbol Table. It also checks if other symbols were added until then.
  *  */
 #define extractSymData(X) \
-		extractData(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar)+sizeof(dotChar)+strlen(dotCommand)+sizeof(spaceChar)),X);\
+		extractData(line+(symbolLen+strlen(symbolChar)+strlen(spaceChar)+strlen(dotChar)+strlen(dotCommand)+strlen(spaceChar)),X);\
 		if (extractResult) {\
 			if (symbolCounter == 0)\
 				symbolList = createSymbolNode(symbolPointer,tmp,0,0);\

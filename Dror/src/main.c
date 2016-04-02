@@ -9,12 +9,16 @@
 #include <math.h>
 #include <time.h>
 
-#include "main.h"
+#include "struct.h"
+
+mySymbolList *symbolList;
+myDataTable *dataTable;
+myHashTable *hashTable;
+myCommandTable commandTable[COMMAND_SIZE];
+
+#include "utils.h"
 #include "first_parsing.h"
 #include "second_parsing.h"
-#include "utils.h"
-#include "prerequisites.h"
-#include "struct.h"
 
 char *lineToProcess;
 char file_name[20];
@@ -28,10 +32,6 @@ int externCounter,entryCounter;
 int hashTableCounter;
 int icForHashTable;
 FILE *obj, *ext, *ent, *fp;
-mySymbolList *symbolList;
-myDataTable *dataTable;
-myHashTable *hashTable;
-myCommandTable commandTable[COMMAND_SIZE];
 
 /* Addressing Table uses the following method to validate opcode's addressing rules according to the table in page 29:
  * 1 - Always present (in order the preserve 0 digits at the beginning)
@@ -47,7 +47,7 @@ int main(int argc, char **argv)
 {
 
 	int i=0;
-	/* int j=0; FOR DEBUG */
+	int j=0;
     char *lineToProcess = malloc(sizeof(char) * BUF_SIZE);
 
     /* Initialization of command table */
@@ -138,7 +138,7 @@ int main(int argc, char **argv)
         fclose(obj);
 		fclose(ext);
 
-        /*printf("\n\n*DEBUG* %s\n",project_name);
+        printf("\n\n*DEBUG* %s\n",project_name);
         printf("Total Errors in program: %d\n",errorFlag);
         printf("IC: %d\tDC: %d\n\n",ic,dc);
         printf("\n\nSymbol Table:\n");
@@ -155,7 +155,7 @@ int main(int argc, char **argv)
 		printf("IC\tERA\tDEST_REG\tDEST_ADDR\tSRC_REG\t\tSRC_ADDR\tOPCODE\tGROUP\tRND\tDATA\tDATA_NUM\tNOT_IN_USE\tbinaryData\t\tbase32\n");
 		if (hashTable!=NULL)
 			for (j=0; j<ic-IC_MEM_ALLOCATION; j++)
-				printf("%d\t%d\t\t%d\t\t%d\t%d\t\t%d\t\t%d\t%d\t%d\t%d\t%d\t\t%d\t\t%s\t\t%s\n",hashTable[j].addr,hashTable[j].era,hashTable[j].dest_reg,hashTable[j].dest_addr,hashTable[j].src_reg,hashTable[j].src_addr,hashTable[j].opcode,hashTable[j].group,hashTable[j].rnd,hashTable[j].data,hashTable[j].datanum,hashTable[j].not_in_use,hashTable[j].binaryData,hashTable[j].base32);*/
+				printf("%d\t%d\t\t%d\t\t%d\t%d\t\t%d\t\t%d\t%d\t%d\t%d\t%d\t\t%d\t\t%s\t\t%s\n",hashTable[j].addr,hashTable[j].era,hashTable[j].dest_reg,hashTable[j].dest_addr,hashTable[j].src_reg,hashTable[j].src_addr,hashTable[j].opcode,hashTable[j].group,hashTable[j].rnd,hashTable[j].data,hashTable[j].datanum,hashTable[j].not_in_use,hashTable[j].binaryData,hashTable[j].base32);
 
 		/* In case that error flag is bigger than 0, remove obj, ext and ent files */
 	    if (errorFlag!=0)

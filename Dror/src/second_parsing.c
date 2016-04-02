@@ -8,21 +8,11 @@
 #include <string.h>
 #include <ctype.h>
 #include <time.h>
-#include "second_parsing.h"
 #include "struct.h"
-#include "prerequisites.h"
+#include "first_parsing.h"
+#include "second_parsing.h"
 #include "main.h"
 #include "utils.h"
-
-extern int dc, ic, errorFlag,symbolLen,externCounter,entryCounter,icForHashTable,hashTableCounter;
-extern mySymbolList *symbolList;
-extern myDataTable *dataTable;
-extern myHashTable *hashTable;
-extern FILE *obj, *ext, *ent;
-
-extern const char symbolChar;
-extern const char dotChar;
-extern const char spaceChar;
 
 void second_parsing_line (char *line, int count) {
 
@@ -39,9 +29,9 @@ void second_parsing_line (char *line, int count) {
 			/* Check if it has symbol ':' char in string */
 			if (hasSymbol(line) != 0) {
 				/* If it has no dot, it's a command */
-				if (hasDot(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar))) == NULL) {
+				if (hasDot(line+(symbolLen+strlen(symbolChar)+strlen(spaceChar))) == NULL) {
 					/* Get the command */
-					dotCommand = getNextString(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar)));
+					dotCommand = getNextString(line+(symbolLen+strlen(symbolChar)+strlen(spaceChar)));
 					/* Find it in table */
 					commandFound = findCommand(dotCommand);
 					/* extract opcode and operands */
@@ -52,11 +42,11 @@ void second_parsing_line (char *line, int count) {
 				/* Line has dot */
 			} else if (line[0] == '.'){
 				/* What's coming after dot? */
-				dotCommand = getNextString(line+sizeof(dotChar));
+				dotCommand = getNextString(line+strlen(dotChar));
 				/* If it's entry */
 				if (strcmp(dotCommand,"entry") == 0) {
 					/* Gets the symbol after entry */
-					symbolPointer = getNextString(line+(sizeof(spaceChar)+strlen(dotCommand)+sizeof(spaceChar)));
+					symbolPointer = getNextString(line+(strlen(spaceChar)+strlen(dotCommand)+strlen(spaceChar)));
 					/* Checks that entry is in the list */
 					symFound = findExistingSym(symbolList,symbolPointer,"entry");
 					if (symFound!=-1) {
@@ -74,7 +64,7 @@ void second_parsing_line (char *line, int count) {
 				/* Find it's opcode */
 				commandFound = findCommand(dotCommand);
 				/* Extract the operands and add it to the table */
-				extractOperands(line+(sizeof(spaceChar)+strlen((char *)dotCommand)),commandFound,2);
+				extractOperands(line+(strlen(spaceChar)+strlen((char *)dotCommand)),commandFound,2);
 				/* Increase hash table counter by 1 after assignment to hash table is done */
 				incHashTable();
 			}

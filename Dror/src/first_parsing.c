@@ -7,22 +7,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "first_parsing.h"
 #include "struct.h"
-#include "prerequisites.h"
-#include "utils.h"
 #include "main.h"
-
-extern int dc, ic, errorFlag,symbolLen,symbolCounter,count;
-extern mySymbolList *symbolList;
-extern myDataTable *dataTable;
-extern myCommandTable commandTable[COMMAND_SIZE];
-extern int addressingTable[82];
-extern const char symbolChar;
-extern const char dotChar;
-extern const char qmChar;
-extern const char spaceChar;
-extern const char commaChar;
+#include "utils.h"
+#include "first_parsing.h"
+#include "second_parsing.h"
 
 void first_parsing_line (char *line, int count) {
 	int dupSymbol=0, commandFound=-1, tmp=0;
@@ -43,7 +32,7 @@ void first_parsing_line (char *line, int count) {
 			/* Check if it has symbol ':' char in string */
 			if (hasSymbol(line) != 0) {
 				/* Looking for more than ':' chars in string*/
-				if (hasSymbol(line+(symbolLen+sizeof(symbolChar))) != 0) {
+				if (hasSymbol(line+(symbolLen+strlen(symbolChar))) != 0) {
 					printf("ERROR: Line %d - More than 1 symbol sign has been found.\n",count);
 					errorFlag++;
 					/* Symbol must be consist of UPPERCASE only */
@@ -58,10 +47,10 @@ void first_parsing_line (char *line, int count) {
 					}
 					if (!dupSymbol) {
 						/* Checking if there's dot after symbol */
-						if (hasDot(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar))) != NULL) {
+						if (hasDot(line+(symbolLen+strlen(symbolChar)+strlen(spaceChar))) != NULL) {
 							symbolPointer = getSymbol(line,hasSymbol(line));
 							/* Isolating the instruction line, to check whether it's string\data or other invalid data */
-							dotCommand = getNextString(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar)+sizeof(dotChar)));
+							dotCommand = getNextString(line+(symbolLen+strlen(symbolChar)+strlen(spaceChar)+strlen(dotChar)));
 							if (strcmp(dotCommand,"string") == 0) {
 								/* Save DC's value before incremental */
 								tmp = dc;
@@ -78,7 +67,7 @@ void first_parsing_line (char *line, int count) {
 							}
 						} else {
 							/* Symbol has been found, but no ".string" or ".data" present. Checking what's the command that comes after... */
-							dotCommand = getNextString(line+(symbolLen+sizeof(symbolChar)+sizeof(spaceChar)));
+							dotCommand = getNextString(line+(symbolLen+strlen(symbolChar)+strlen(spaceChar)));
 							/* Take the command and verify it's existence in Command Table. If it's valid, it returns it's opcode number in decimal. */
 							commandFound = findCommand(dotCommand);
 							if (commandFound!=-1) {
@@ -109,12 +98,12 @@ void first_parsing_line (char *line, int count) {
 				}
 				/* Check whether it has a dot but it belongs to extern or entry */
 			} else if (line[0] == '.'){
-				dotCommand = getNextString(line+sizeof(dotChar));
+				dotCommand = getNextString(line+strlen(dotChar));
 				if (strcmp(dotCommand,"entry") == 0) {
 					/* DEBUG
 					printf("%d: %s (entry found, ignoring in first parsing)\n",count,line);*/
 				} else if (strcmp(dotCommand,"extern") == 0) {
-					symbolPointer = getNextString(line+(sizeof(spaceChar)+strlen(dotCommand)+sizeof(spaceChar)));
+					symbolPointer = getNextString(line+(strlen(spaceChar)+strlen(dotCommand)+strlen(spaceChar)));
 					dupSymbol = findExistingSym(symbolList,symbolPointer,"symbol");
 					if (!dupSymbol) {
 						if (symbolCounter == 0)
@@ -139,7 +128,7 @@ void first_parsing_line (char *line, int count) {
 				commandFound = findCommand(dotCommand);
 				if (commandFound!=-1) {
 					/* Parsing the opcode number along with it's values */
-					extractResult = extractOperands(line+(sizeof(spaceChar)+strlen((char *)dotCommand)),commandFound,1);
+					extractResult = extractOperands(line+(strlen(spaceChar)+strlen(dotCommand)),commandFound,1);
 					if (extractResult)
 						/* DEBUG
 						printf("%d: %s command found: (\"%s\")\n",count,line,dotCommand); */
@@ -230,7 +219,7 @@ int extractData(char *str, char *type) {
 			int qmFound=0;
 			token = str;
 			/* Verifies that first letter is QM */
-			if (strcmp(str[0],qmChar) != 0) {
+			if (str[0] != qmChar[0]) {
 				printf("ERROR: Line %d - String must begin with quotation mark!\n",count);
 				errorFlag++;
 				return 0;
@@ -309,7 +298,7 @@ int extractOperands(char *str, int opcode, int phase) {
 	 * *************/
 
 	/* Extracts the 1st operand using comma delimiter */
-	token = strchr(str,commaChar);
+	token = strchr(str,(int) commaChar[0]);
 	/* The opcode is like one of the below... (no operands at all) */
 	if (opcode==14 || opcode==15) {
 		/* If operand is found anyway... Error! */

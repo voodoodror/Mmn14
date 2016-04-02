@@ -9,9 +9,8 @@
 #include <ctype.h>
 #include "struct.h"
 #include "second_parsing.h"
-#include "main.h"
-#include "prerequisites.h"
 #include "utils.h"
+#include "main.h"
 
 /* Used to create a new linked list of symbols */
 mySymbolList *createSymbolNode (char* str, unsigned int dc, int external, int action) {
@@ -68,4 +67,55 @@ myDataTable *addDataNode (myDataTable* dataTable, int dc, int data) {
 			dataTable->next = newData;
 	}
 	return firstpos;
+}
+/* Initialize command table */
+void init_command_table() {
+	commandTable[0].command = "mov";
+	commandTable[0].srcOperations=1;
+	commandTable[0].destOperations=1;
+	commandTable[1].command = "cmp";
+	commandTable[1].srcOperations=1;
+	commandTable[1].destOperations=1;
+	commandTable[2].command = "add";
+	commandTable[2].srcOperations=1;
+	commandTable[2].destOperations=1;
+	commandTable[3].command = "sub";
+	commandTable[3].srcOperations=1;
+	commandTable[3].destOperations=1;
+	commandTable[4].command = "not";
+	commandTable[4].srcOperations=0;
+	commandTable[4].destOperations=1;
+	commandTable[5].command = "clr";
+	commandTable[5].srcOperations=0;
+	commandTable[5].destOperations=1;
+	commandTable[6].command = "lea";
+	commandTable[6].srcOperations=1;
+	commandTable[6].destOperations=1;
+	commandTable[7].command = "inc";
+	commandTable[7].srcOperations=0;
+	commandTable[7].destOperations=1;
+	commandTable[8].command = "dec";
+	commandTable[8].srcOperations=0;
+	commandTable[8].destOperations=1;
+	commandTable[9].command = "jmp";
+	commandTable[9].srcOperations=0;
+	commandTable[9].destOperations=1;
+	commandTable[10].command = "bne";
+	commandTable[10].srcOperations=0;
+	commandTable[10].destOperations=1;
+	commandTable[11].command = "red";
+	commandTable[11].srcOperations=0;
+	commandTable[11].destOperations=1;
+	commandTable[12].command = "prn";
+	commandTable[12].srcOperations=0;
+	commandTable[12].destOperations=1;
+	commandTable[13].command = "jsr";
+	commandTable[13].srcOperations=0;
+	commandTable[13].destOperations=1;
+	commandTable[14].command = "rts";
+	commandTable[14].srcOperations=0;
+	commandTable[14].destOperations=0;
+	commandTable[15].command = "stop";
+	commandTable[15].srcOperations=0;
+	commandTable[15].destOperations=0;
 }

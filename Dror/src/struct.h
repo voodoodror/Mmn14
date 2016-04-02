@@ -74,11 +74,10 @@ typedef struct commandTables {
 
 } myCommandTable;
 
-char *parseProjectName(char* project);
-int findExistingSym(mySymbolList *symbolList,char *sym, char *type);
-int findCommand(char *command);
-int hasSymbol(char* str);
-char *getNextString(char* str);
-char *getSymbol(char* str, int pos);
+mySymbolList *createSymbolNode (char* str, unsigned int dc, int external, int action);
+mySymbolList *addSymbolNode (mySymbolList* symbolList, char* str, unsigned int dc, int external, int action);
+myDataTable *createDataNode (int dc, int data);
+myDataTable *addDataNode (myDataTable* dataTable, int dc, int data);
+void init_command_table();
 
 #endif /* STRUCT_H_ */

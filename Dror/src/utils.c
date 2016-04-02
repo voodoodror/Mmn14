@@ -7,14 +7,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "utils.h"
-#include "prerequisites.h"
+#include <time.h>
 #include "struct.h"
+#include "utils.h"
+#include "main.h"
 
-extern const char symbolChar;
-extern const char dotChar;
-extern const char qmChar;
-extern const char newlineChar;
+const char *symbolChar = ":";
+const char *dotChar = ".";
+const char *spaceChar = " ";
+const char *qmChar = "\"";
+const char *newlineChar = "\n";
+const char *commaChar = ","; /* , char */
 
 /* strip_extra_spaces Removes any extra spaces\tabs, keeps commas clean from left and right, removes new line char */
 void strip_extra_spaces(char* str) {
@@ -25,7 +28,7 @@ void strip_extra_spaces(char* str) {
 	  if (str[i+1] == '\t')
 	  		  str[i+1] = ' ';
 	  /* Skip if the following cases are met */
-	  if (isspace(str[i]) && !isalpha(str[i-1]) && (str[i-1] != symbolChar) && (!isdigit(str[i+1]) || !isdigit(str[i-1]) || str[i+1] =='-' || str[i-1] == qmChar))
+	  if (isspace(str[i]) && !isalpha(str[i-1]) && (str[i-1] != symbolChar[0]) && (!isdigit(str[i+1]) || !isdigit(str[i-1]) || str[i+1] =='-' || str[i-1] == qmChar[0]))
 		  	  i++;
 	  if(!isspace(str[i]) || (i>0 && !isspace(str[i-1])))
 		  str[x++] = str[i];
@@ -33,7 +36,7 @@ void strip_extra_spaces(char* str) {
   if (isspace(str[x]))
 	  str[x] = '\0';
   /* Removes new line char */
-  if (strchr(str,newlineChar) != NULL)
+  if (strchr(str,(int) newlineChar[0]) != NULL)
 	  str[x] = '\0';
   else
 	  str[x] = '\0';
@@ -113,7 +116,7 @@ char *decimalToBase32 (int num, int pad, char *result) {
 	}
 	while(quotient!=0) {
 		temp = quotient % 32;
-		//To convert integer into character
+		/* To convert integer into character */
 		if( temp < 10)
 			temp =temp + 48;
 		else
@@ -134,23 +137,23 @@ char* concat(char *s1, char *s2)
 {
     size_t len1 = strlen(s1);
     size_t len2 = strlen(s2);
-    char *result = malloc(len1+len2+1);//+1 for the zero-terminator
-    //in real code you would check for errors in malloc here
+    char *result = malloc(len1+len2+1); /* +1 for the zero-terminator */
+    /* in real code you would check for errors in malloc here */
     memcpy(result, s1, len1);
-    memcpy(result+len1, s2, len2+1);//+1 to copy the null-terminator
+    memcpy(result+len1, s2, len2+1);/* +1 to copy the null-terminator */
     return result;
 }
 /* hasDot checks for existence of dot in a string. It returns the char * at the point where dot is. */
 char *hasDot(char* str) {
 	char *tmpStr;
-	tmpStr = strchr(str,dotChar);
+	tmpStr = strchr(str,(int) dotChar[0]);
 
 	return tmpStr;
 }
 /* hasQM checks for existence of quotation mark in a string. It returns the char * at the point where QM is. */
 char *hasQM(char* str) {
 	char *tmpStr;
-	tmpStr = strchr(str,qmChar);
+	tmpStr = strchr(str,(int) qmChar[0]);
 
 	return tmpStr;
 }
@@ -164,4 +167,117 @@ int symIsUpper(char* str) {
 		myStr=myStr+1;
 	}
 	return 1;
+}
+/* Strips the extension (AS) of the file and returns the string without it */
+char *parseProjectName(char* project) {
+	char *dotPos = strchr(project, (int) dotChar[0]);
+	char *projectName = malloc(sizeof(char*));
+
+	int projectNameLen;
+
+	projectNameLen = strlen(project)-strlen(dotPos);
+
+	memcpy(projectName,project,projectNameLen);
+	projectName[projectNameLen] = '\0';
+	return projectName;
+}
+/* Replace DC with IC+DC */
+void replaceStrAddr() {
+	mySymbolList* iter;
+	for (iter = symbolList; NULL != iter; iter = iter->next) {
+		if(iter->ext==0 && iter->action==0) {
+			iter->addr+=ic;
+		}
+	}
+}
+/* Lookup for existing symbol in list */
+int findExistingSym(mySymbolList *symbolList,char *sym, char *type) {
+	mySymbolList* iter;
+	int totalSym=0,i=0,numberFound=0;
+	for (iter = symbolList; NULL != iter; iter = iter->next) {
+		if (sym!=NULL) {
+			if(strcmp(iter->Sym,sym)==0) {
+				if (strcmp(type,"entry") == 0) {
+					if (iter->ext==0) {
+						return iter->addr;
+					} else {
+						return -1;
+					}
+				} else if (strcmp(type,"symbol") == 0) {
+					return 1;
+				} else if (strcmp(type,"data") == 0) {
+					return iter->addr;
+				} else {
+					return -1;
+				}
+			}
+		}
+		totalSym++;
+	}
+	/* findExistingSym is also used a random symbol when it gets "random" type */
+	if (strcmp(type,"random")==0) {
+		while (!numberFound) {
+			srand(time(NULL));
+			/* Selects a random number out of total symbols count */
+			int r = ( rand() % totalSym ) + 1;
+			iter = symbolList;
+			for (i=0; i<r; i++) {
+				iter = iter->next;
+			}
+			/* Retry if symbol is external */
+			if (iter->ext==0) {
+				return iter->addr;
+			}
+		}
+	}
+	return 0;
+}
+/* Searching for command in command table */
+int findCommand(char *command) {
+	int i=0;
+	while (i<COMMAND_SIZE) {
+		if (strcmp(command,commandTable[i].command)==0) {
+			return i;
+		}
+		i++;
+	}
+	return -1;
+}
+/* hasSymbol checks for existence of ':' in a string. It returns the char * at the point where ':' is. */
+int hasSymbol(char* str) {
+	char *symbolPos = strchr(str,(int) symbolChar[0]);
+	int tmpLen;
+
+	if (symbolPos == NULL)
+		return 0;
+	tmpLen = strlen(str)-strlen(symbolPos);
+	if (!tmpLen)
+		tmpLen+=1;
+
+	symbolLen=tmpLen;
+	return tmpLen;
+}
+/* getNextString checks for existence of SPACE in a string. It returns the char * at the point where SPACE is. */
+char *getNextString(char* str) {
+	char *dotPos = strchr(str,(int) spaceChar[0]);
+	char *tmp = malloc(sizeof(str));
+	int tmpLen;
+
+	if (dotPos == NULL)
+		return str;
+	tmpLen = strlen(str)-strlen(dotPos);
+	if (!tmpLen)
+		tmpLen+=1;
+
+	dotLen=tmpLen;
+	memcpy(tmp,str,tmpLen+1);
+	tmp[dotLen] = '\0';
+	return tmp;
+}
+/* getSymbol returns 'str' in 'pos' position */
+char *getSymbol(char* str, int pos) {
+	char *myStr = malloc(sizeof(char*));
+	memcpy(myStr,str,pos);
+	myStr[pos] = '\0';
+	return myStr;
 }
