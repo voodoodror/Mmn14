@@ -147,8 +147,6 @@ int extractData(char *str, char *type) {
 
 	/* Initializes char array with buffer size, it will be used with strcpy */
 	char rwString[BUF_SIZE];
-	/* rwPointer Will be used as string to delimit to token */
-	char *rwPointer;
 	/* Copies string to rwString, will be used later to re-copy string to str */
 	strcpy(rwString,str);
 	char *token;
@@ -158,7 +156,6 @@ int extractData(char *str, char *type) {
 	 * VERIFICATIONS
 	 * *************/
 
-	rwPointer = rwString;
 	/* If data is empty */
 	if (str == NULL) {
 		printf("ERROR: Line %d - No data has been found in string.\n",count);
@@ -170,7 +167,7 @@ int extractData(char *str, char *type) {
 	if (strcmp(type,"data") == 0) {
 
 		/* Extracts token from string and checks if it has no data */
-		token = strsep(&rwPointer,commaChar);
+		token = strtok(rwString,commaChar);
 		if (token == NULL) {
 			printf("ERROR: Line %d - Error occurred while trying to parse data field.\n1. Please make sure you don\'t have comma at the beginning or end of the string.\n2. Don't put 2 commas side by side.\n",count);
 			errorFlag++;
@@ -185,7 +182,7 @@ int extractData(char *str, char *type) {
 				return 0;
 			}
 			/* Check next operand after , char */
-			token = strsep(&rwPointer,commaChar);
+			token = strtok(NULL,commaChar);
 		}
 
 		/* *************
@@ -194,8 +191,7 @@ int extractData(char *str, char *type) {
 
 		/* Restores original string back to rwString for parsing */
 		strcpy(rwString,str);
-		rwPointer = rwString;
-		token = strsep(&rwPointer,commaChar);
+		token = strtok(rwString,commaChar);
 
 		/* Loop until no more tokens are found */
 		while (token != NULL) {
@@ -208,7 +204,7 @@ int extractData(char *str, char *type) {
 				dataTable = addDataNode(dataTable,dc++,num);
 			}
 
-			token = strsep(&rwPointer,commaChar);
+			token = strtok(NULL,commaChar);
 		}
 		/* Return successfully done parsing */
 		return 1;
@@ -273,8 +269,6 @@ int extractOperands(char *str, int opcode, int phase) {
 
 	/* Initializes char array with buffer size, it will be used with strcpy */
 	char rwString[BUF_SIZE];
-	/* rwPointer Will be used as string to delimit to token */
-	char *rwPointer;
 	/* Copies string to rwString, will be used later to re-copy string to str */
 	strcpy(rwString,str);
 
@@ -291,14 +285,17 @@ int extractOperands(char *str, int opcode, int phase) {
 	 *  validateSuccess is IC number received by validOperOpcode in case that it passed the required tests.
 	 */
 	int i=0,singleOperand=0,noOperands=0,srcAddr=-1,destAddr=-1,validateSuccess=0;
-	rwPointer = rwString;
 
 	/* *************
 	 * VERIFICATIONS
 	 * *************/
-
 	/* Extracts the 1st operand using comma delimiter */
-	token = strchr(str,(int) commaChar[0]);
+	if (strchr(rwString,(int) commaChar[0]) == NULL) {
+		token = NULL;
+	} else {
+		token = strtok(rwString,commaChar);
+	}
+
 	/* The opcode is like one of the below... (no operands at all) */
 	if (opcode==14 || opcode==15) {
 		/* If operand is found anyway... Error! */
@@ -324,7 +321,8 @@ int extractOperands(char *str, int opcode, int phase) {
 		}
 	}
 	/* Checks for 2nd Operands */
-	token = strsep(&rwPointer,commaChar);
+	strcpy(rwString,str);
+	token = strtok(rwString,commaChar);
 
 	/* Checks for overall comma count, increases i each time comma is present*/
 	while (token != NULL && !singleOperand && !noOperands) {
@@ -334,7 +332,7 @@ int extractOperands(char *str, int opcode, int phase) {
 			errorFlag++;
 			return 0;
 		}
-		token = strsep(&rwPointer,commaChar);
+		token = strtok(NULL,commaChar);
 		i++;
 	}
 
@@ -346,16 +344,15 @@ int extractOperands(char *str, int opcode, int phase) {
 	if (i==2 && !singleOperand && !noOperands) {
 		/* Re-copies string back to rwString after successful validation */
 		strcpy(rwString,str);
-		rwPointer = rwString;
 
 		/* Extract 1st operand and place it's value in srcAddrValue */
-		token = strsep(&rwPointer,commaChar);
+		token = strtok(rwString,commaChar);
 		srcAddrValue = token;
 		/* Sends the value for recognition */
 		srcAddr = recognizeOperand(token);
 
 		/* Extract 2nd operand and place it's value in destAddrValue */
-		token = strsep(&rwPointer,commaChar);
+		token = strtok(NULL,commaChar);
 		destAddrValue = token;
 		/* Sends the value for recognition */
 		destAddr = recognizeOperand(token);
